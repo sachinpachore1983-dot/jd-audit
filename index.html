@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>JD AuditPro - दैनिक ऑडिट व मॉनिटरिंग</title>
+  
+  <meta name="theme-color" content="#1e40af">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="JD Audit">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Firebase App & Firestore SDKs (v9 Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .touch-target { min-height: 44px; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-24">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-blue-900 text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-9 h-9 bg-blue-700 rounded-lg flex items-center justify-center text-white shadow">
+          <i class="ph-bold ph-clipboard-text text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold leading-tight">JD AuditPro Mobile</h1>
+          <p id="header-ref-display" class="text-xs text-blue-200">REF: JD-20261026-01</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <div id="cloud-status-badge" class="flex items-center space-x-1 bg-blue-800 text-emerald-300 text-xs px-2.5 py-1 rounded-full border border-blue-700 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="cloud-status-text">क्लाउड सिंक सुरू</span>
+        </div>
+        <button id="btn-header-new-audit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg flex items-center space-x-1 font-medium shadow transition">
+          <i class="ph-bold ph-plus"></i>
+          <span>नवीन ऑडिट</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-4xl mx-auto px-4 flex border-t border-blue-800 text-sm">
+      <button id="nav-tab-daily" class="flex-1 py-2.5 text-center font-semibold text-white border-b-2 border-white flex items-center justify-center space-x-1.5 transition">
+        <i class="ph-bold ph-check-square"></i>
+        <span>दैनिक ऑडिट</span>
+      </button>
+      <button id="nav-tab-summary" class="flex-1 py-2.5 text-center font-semibold text-blue-200 hover:text-white border-b-2 border-transparent flex items-center justify-center space-x-1.5 transition">
+        <i class="ph-bold ph-chart-bar"></i>
+        <span>मासिक सारांश व ग्राफ्स</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="max-w-4xl mx-auto p-4 space-y-4">
+
+    <!-- VIEW 1: DAILY AUDIT -->
+    <div id="view-daily-audit" class="space-y-4">
+      
+      <!-- Meta Card -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer" id="toggle-meta-btn">
+          <div class="flex items-center space-x-2">
+            <i class="ph-bold ph-info text-blue-700"></i>
+            <h2 class="font-bold text-sm text-slate-800">ऑडिट माहिती व तपशील</h2>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span id="meta-summary-display" class="text-xs font-medium text-slate-500 truncate max-w-[220px]">Building No ०२ | HT 382 | Shift I</span>
+            <i class="ph-bold ph-caret-down text-slate-400"></i>
+          </div>
+        </div>
+        <div id="meta-form-body" class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">प्लॅन्ट / शॉप निवडा</label>
+            <select id="meta-plant" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium text-slate-800">
+              <option value="Building No ०२ (VW / TML / JLR ) शॉप">Building No ०२ (VW / TML / JLR ) शॉप</option>
+              <option value="Building No ०३ (Cummins / AL) शॉप">Building No ०३ (Cummins / AL) शॉप</option>
+              <option value="Building No ०४ (Stellantis) शॉप">Building No ०४ (Stellantis) शॉप</option>
+              <option value="Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप">Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप</option>
+              <option value="Wave Shop">Wave Shop</option>
+              <option value="Avanti Shop">Avanti Shop</option>
+              <option value="Old Ford Shop">Old Ford Shop</option>
+              <option value="Plot No ३६">Plot No ३६</option>
+              <option value="Pragati Shop">Pragati Shop</option>
+              <option value="Tanaga Shop">Tanaga Shop</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">मशिन / लाईन नं.</label>
+            <input type="text" id="meta-line" value="HT 382" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">शिफ्ट (Shift)</label>
+            <select id="meta-shift" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+              <option value="Shift I">Shift I</option>
+              <option value="Shift II">Shift II</option>
+              <option value="Shift III">Shift III</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">कर्मचारी / ऑपरेटर नाव</label>
+            <input type="text" id="meta-auditee" placeholder="कर्मचाऱ्याचे नाव" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ऑडिटरचे नाव</label>
+            <input type="text" id="meta-auditor" placeholder="तुमचे नाव" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ऑडिट दिनांक</label>
+            <input type="date" id="meta-date" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+          </div>
+        </div>
+      </section>
+
+      <!-- Role Selection Tabs -->
+      <section class="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 px-1">तपासणीचे पद (Role)</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs font-semibold" id="role-selector-container">
+          <button data-role="Operator" class="role-btn py-2 px-2.5 rounded-lg border text-center transition bg-blue-700 text-white border-blue-700 shadow-sm">
+            ऑपरेटर (१४)
+          </button>
+          <button data-role="Inspector" class="role-btn py-2 px-2.5 rounded-lg border text-center transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100">
+            इन्स्पेक्टर (१०)
+          </button>
+          <button data-role="SupProduction" class="role-btn py-2 px-2.5 rounded-lg border text-center transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100">
+            सुपरवायझर (प्रोड.) (१४)
+          </button>
+          <button data-role="SupQuality" class="role-btn py-2 px-2.5 rounded-lg border text-center transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100">
+            सुपरवायझर (क्वालिटी) (१३)
+          </button>
+        </div>
+      </section>
+
+      <!-- Live Score Bar -->
+      <section class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <span class="text-xs text-slate-500 font-medium">चालू कंप्लायन्स स्कोअर:</span>
+          <div class="flex items-baseline space-x-1.5">
+            <span id="current-score-pct" class="text-2xl font-black text-blue-700">0%</span>
+            <span id="current-score-fraction" class="text-xs text-slate-500 font-semibold">(० / २८ गुण)</span>
+          </div>
+        </div>
+        <div class="flex space-x-2 text-xs font-bold">
+          <span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800" id="badge-count-2">२: ०</span>
+          <span class="px-2.5 py-1 rounded-md bg-amber-100 text-amber-800" id="badge-count-1">१: ०</span>
+          <span class="px-2.5 py-1 rounded-md bg-rose-100 text-rose-800" id="badge-count-0">०: ०</span>
+        </div>
+      </section>
+
+      <!-- Checklist Cards Container -->
+      <section id="checklist-cards-container" class="space-y-3">
+        <!-- Rendered by JavaScript -->
+      </section>
+
+      <!-- Signatures Card -->
+      <section class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 space-y-4">
+        <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2 border-b pb-2">
+          <i class="ph-bold ph-pen-nib text-blue-700"></i>
+          <span>डिजिटल स्वाक्षरी (Signatures)</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-semibold text-slate-600">ऑडिटरची सही</label>
+              <button class="text-xs text-rose-600 font-medium hover:underline" id="btn-clear-sig-auditor">पुसा</button>
+            </div>
+            <canvas id="canvas-auditor" class="w-full h-24 bg-slate-50 border border-slate-300 rounded-lg touch-none"></canvas>
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-semibold text-slate-600">ऑडिटी / ऑपरेटरची सही</label>
+              <button class="text-xs text-rose-600 font-medium hover:underline" id="btn-clear-sig-auditee">पुसा</button>
+            </div>
+            <canvas id="canvas-auditee" class="w-full h-24 bg-slate-50 border border-slate-300 rounded-lg touch-none"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Buttons Row -->
+      <section class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <button id="btn-save-cloud" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow flex items-center justify-center space-x-1.5 transition">
+          <i class="ph-bold ph-cloud-arrow-up text-lg"></i>
+          <span>क्लाउडवर सेव्ह करा</span>
+        </button>
+        <button id="btn-open-email-modal" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow flex items-center justify-center space-x-1.5 transition">
+          <i class="ph-bold ph-envelope-simple text-lg"></i>
+          <span>ईमेल अहवाल (Mail)</span>
+        </button>
+        <button id="btn-export-pdf" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-sm shadow flex items-center justify-center space-x-1.5 transition">
+          <i class="ph-bold ph-file-pdf text-lg"></i>
+          <span>प्रिंट / PDF</span>
+        </button>
+        <button id="btn-reset-current" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-sm flex items-center justify-center space-x-1.5 transition">
+          <i class="ph-bold ph-arrows-counter-clockwise text-lg"></i>
+          <span>नवीन ऑडिट</span>
+        </button>
+      </section>
+    </div>
+
+    <!-- VIEW 2: MONTHLY SUMMARY & GRAPHS -->
+    <div id="view-monthly-summary" class="hidden space-y-4">
+      
+      <!-- Filter Bar -->
+      <section class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">महिना निवडा</label>
+          <input type="month" id="filter-month" value="2026-10" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">प्लॅन्ट निवडा</label>
+          <select id="filter-plant" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <option value="All">सर्व प्लॅन्ट (All)</option>
+            <option value="Building No ०२ (VW / TML / JLR ) शॉप">Building No ०२ (VW / TML / JLR ) शॉप</option>
+            <option value="Building No ०३ (Cummins / AL) शॉप">Building No ०३ (Cummins / AL) शॉप</option>
+            <option value="Building No ०४ (Stellantis) शॉप">Building No ०४ (Stellantis) शॉप</option>
+            <option value="Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप">Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप</option>
+            <option value="Wave Shop">Wave Shop</option>
+            <option value="Avanti Shop">Avanti Shop</option>
+            <option value="Old Ford Shop">Old Ford Shop</option>
+            <option value="Plot No ३६">Plot No ३६</option>
+            <option value="Pragati Shop">Pragati Shop</option>
+            <option value="Tanaga Shop">Tanaga Shop</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">ईमेल मॅपिंग (Settings)</label>
+          <button id="btn-config-emails" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg font-semibold text-xs flex items-center justify-center space-x-1">
+            <i class="ph-bold ph-gear"></i>
+            <span>प्लॅन्ट ईमेल सेट करा</span>
+          </button>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Excel रिपोर्ट</label>
+          <button id="btn-download-excel" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center justify-center space-x-1 shadow">
+            <i class="ph-bold ph-file-xls text-base"></i>
+            <span>२-शीट Excel डाऊनलोड</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Graphical Analytics Charts -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Plant-wise Chart -->
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+          <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center space-x-1.5">
+            <i class="ph-bold ph-factory text-blue-600"></i>
+            <span>प्लॅन्टनिहाय कंप्लायन्स %</span>
+          </h4>
+          <div class="h-48">
+            <canvas id="chart-plant"></canvas>
+          </div>
+        </div>
+        <!-- Line-wise Chart -->
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+          <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center space-x-1.5">
+            <i class="ph-bold ph-cpu text-blue-600"></i>
+            <span>मशिन / लाईननिहाय कंप्लायन्स %</span>
+          </h4>
+          <div class="h-48">
+            <canvas id="chart-line"></canvas>
+          </div>
+        </div>
+        <!-- Role-wise Chart -->
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+          <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center space-x-1.5">
+            <i class="ph-bold ph-user-check text-blue-600"></i>
+            <span>पदानुसार (Role-wise) कंप्लायन्स %</span>
+          </h4>
+          <div class="h-48">
+            <canvas id="chart-role"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line-wise Matrix Summary Table -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-1.5">
+            <i class="ph-bold ph-table text-blue-700"></i>
+            <span>मशिननिहाय व भूमिकानिहाय सारांश मॅट्रिक्स (Line Matrix)</span>
+          </h3>
+          <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full" id="total-cloud-records-count">० नोंदी उपलब्ध</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-600 uppercase font-bold border-b">
+              <tr>
+                <th class="p-2.5">प्लॅन्ट</th>
+                <th class="p-2.5">मशिन / लाईन</th>
+                <th class="p-2.5 text-center">ऑपरेटर %</th>
+                <th class="p-2.5 text-center">इन्स्पेक्टर %</th>
+                <th class="p-2.5 text-center">सुप. प्रोडक्शन %</th>
+                <th class="p-2.5 text-center">सुप. क्वालिटी %</th>
+                <th class="p-2.5 text-center">एकूण सरासरी %</th>
+                <th class="p-2.5 text-center">शेरा</th>
+              </tr>
+            </thead>
+            <tbody id="summary-matrix-tbody" class="divide-y divide-slate-200 font-medium">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Cloud History Table with Action Delete Button -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 class="text-sm font-bold text-slate-800">सर्व ताज्या दैनिक ऑडिट नोंदी</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-600 uppercase font-bold border-b">
+              <tr>
+                <th class="p-2.5">तारीख</th>
+                <th class="p-2.5">प्लॅन्ट</th>
+                <th class="p-2.5">मशिन</th>
+                <th class="p-2.5">पद</th>
+                <th class="p-2.5">कर्मचारी</th>
+                <th class="p-2.5">ऑडिटर</th>
+                <th class="p-2.5 text-center">गुण</th>
+                <th class="p-2.5 text-center">टक्केवारी</th>
+                <th class="p-2.5">शेरा</th>
+                <th class="p-2.5 text-center">क्रिया (Action)</th>
+              </tr>
+            </thead>
+            <tbody id="history-logs-tbody" class="divide-y divide-slate-200 font-medium">
+              <!-- Populated by Real Cloud Sync -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Email Modal -->
+  <div id="modal-email" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+      <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i class="ph-bold ph-envelope text-xl"></i>
+          <h3 class="font-bold text-sm">ऑडिट अहवाल ईमेल पाठवा</h3>
+        </div>
+        <button id="btn-close-email-modal" class="text-white hover:text-slate-300 text-xl font-bold">&times;</button>
+      </div>
+      <div class="p-4 space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">प्लॅन्ट (ऑटो-मॅप ईमेल)</label>
+          <input type="text" id="email-modal-plant" readonly class="w-full bg-slate-100 border border-slate-300 rounded-lg p-2 font-bold text-blue-900">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">प्राप्तकर्त्याचा ईमेल पत्ता (To)</label>
+          <input type="email" id="email-modal-to" placeholder="qa.plant@company.com" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">ईमेल विषय (Subject)</label>
+          <input type="text" id="email-modal-subject" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">ईमेल मुख्य मजकूर (Body Preview)</label>
+          <textarea id="email-modal-body" rows="6" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-mono text-xs"></textarea>
+        </div>
+      </div>
+      <div class="p-3 bg-slate-100 border-t flex justify-end space-x-2">
+        <button id="btn-send-email-mailto" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-bold text-xs flex items-center space-x-1.5 shadow">
+          <i class="ph-bold ph-paper-plane-tilt"></i>
+          <span>Gmail / Outlook उघडा</span>
+        </button>
+        <button id="btn-send-email-share" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-xs flex items-center space-x-1">
+          <i class="ph-bold ph-share-network"></i>
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plant Email Settings Modal (All 11 Plants) -->
+  <div id="modal-plant-settings" class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div class="p-4 bg-slate-800 text-white flex justify-between items-center flex-shrink-0">
+        <h3 class="font-bold text-sm flex items-center space-x-2">
+          <i class="ph-bold ph-gear"></i>
+          <span>प्लॅन्टनिहाय ईमेल सेटिंग्ज (Plant Email Settings)</span>
+        </h3>
+        <button id="btn-close-settings-modal" class="text-white hover:text-slate-300 text-xl font-bold">&times;</button>
+      </div>
+      <div class="p-4 space-y-3 text-sm overflow-y-auto flex-1">
+        <p class="text-xs text-slate-500 mb-2">प्रत्येक प्लॅन्टसाठी एकदा ईमेल आयडी सेट करा. त्या प्लॅन्टचे ऑडिट झाल्यावर संबंधित ईमेल आपोआप भरला जाईल.</p>
+        
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Building No ०२ (VW / TML / JLR ) शॉप</label>
+          <input type="email" id="setting-b2" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Building No ०३ (Cummins / AL) शॉप</label>
+          <input type="email" id="setting-b3" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Building No ०४ (Stellantis) शॉप</label>
+          <input type="email" id="setting-b4" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप</label>
+          <input type="email" id="setting-b5" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Wave Shop</label>
+          <input type="email" id="setting-wave" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Avanti Shop</label>
+          <input type="email" id="setting-avanti" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Old Ford Shop</label>
+          <input type="email" id="setting-ford" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Plot No ३६</label>
+          <input type="email" id="setting-plot36" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Pragati Shop</label>
+          <input type="email" id="setting-pragati" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Tanaga Shop</label>
+          <input type="email" id="setting-tanaga" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">Other</label>
+          <input type="email" id="setting-other" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-xs">
+        </div>
+      </div>
+      <div class="p-3 bg-slate-100 border-t flex justify-end flex-shrink-0">
+        <button id="btn-save-email-settings" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow">
+          सेटिंग्ज सेव्ह करा
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center space-x-2">
+    <i class="ph-bold ph-check text-emerald-400"></i>
+    <span id="toast-msg">यशस्वी!</span>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- 1. FIREBASE CONFIGURATION (YOUR REAL PROJECT: jd-audit-pro-mmpl) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyADdWPJFZY3m1Rlz2T52GSJTw5zKD_Ql-E",
+      authDomain: "jd-audit-pro-mmpl.firebaseapp.com",
+      projectId: "jd-audit-pro-mmpl",
+      storageBucket: "jd-audit-pro-mmpl.firebasestorage.app",
+      messagingSenderId: "541551947854",
+      appId: "1:541551947854:web:23229d54d43386d7bd931f",
+      measurementId: "G-W5WN5QP912"
+    };
+
+    let db = null;
+    let auth = null;
+    let isFirebaseOnline = false;
+
+    try {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        auth = firebase.auth();
+        auth.signInAnonymously().catch(err => console.log('Auth Notice:', err.message));
+        isFirebaseOnline = true;
+      }
+    } catch (e) {
+      console.warn('Firebase Initialization Offline:', e);
+    }
+
+    // --- 2. EXACT VERBATIM CHECKLIST FROM JOB DESCRIPTION.XLSX ---
+    const CHECKLIST_DATABASE = {
+      Operator: [
+        { id: 'op_1', text: 'शिफ्टच्या सुरवातीला शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड चेक करणे. त्यावर जर काही सूचना असतील तर ते अमलात आणने .', freq: 'प्रत्येक शिफ्टला', rec: 'शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड' },
+        { id: 'op_2', text: 'शिफ्ट स्टार्ट करण्यापूर्वी कंट्रोल प्लॅन प्रमाणे सगळे प्रोसेस पॅरामीटर्स चेक करणे आणि सर्व प्रोसेस पॅरामीटर्स ओक असतील तरच प्रोडक्शन चालू करणे.\nजर एकदा पॅरामीटर टॉलरन्सच्या बाहेर असेल तर तो रीसेट करून, सुपरवायझर ला सांगावे.\nसर्व रिडींग स्टार्टअप चेक शीट मध्ये लिहावे व त्यावर सुपरवायझरचे साइन घ्यावी.', freq: 'प्रत्येक शिफ्टला', rec: 'स्टार्टअप चेक शीट' },
+        { id: 'op_3', text: 'स्टार्टअप शीट भरल्या नंतर - मशीन लेवल - I मेंटेनन्स चे चेक पॉईंट चेक करावे, सर्व पॅरामीटर्स ओक असतील तरच प्रोडक्शन चालू करणे.\nजर एकदा पॅरामीटर टॉलरन्सच्या बाहेर असेल तर तो रीसेट करून, सुपरवायझर ला सांगावे.\nसर्व रिडींग मशीन लेवल - I मेंटेनन्स चे चेक पॉईंट शीट मध्ये लिहावे व त्यावर सुपरवायझरचे साइन घ्यावी.', freq: 'प्रत्येक शिफ्टला', rec: 'मशीन लेवल - I मेंटेनन्स चे चेक पॉईंट शीट' },
+        { id: 'op_4', text: 'Pokayoke व्हेरिफिकेशन करण्यासाठी quality इन्स्पेक्टर ला मदत करावे.', freq: 'प्रत्येक शिफ्टला', rec: 'Pokayoke व्हेरिफिकेशन शीट' },
+        { id: 'op_5', text: 'स्टार्ट अप , मशीन लेवल - I मेंटेनन्स चे चेक आणि Pokayoke व्हेरिफिकेशन ओके झाल्या नंतरच पहिला जॉब मारावा. पहिला जॉब मारल्या नंतर तो ओके असल्याची खात्री करून, तो जॉब quality इन्स्पेक्टरला फर्स्ट पिस प्रमाणित (Approval ) करण्यासाठी द्यावा.\nQuality इन्स्पेक्टर ने जर प्रॉडक्टशन साठी approval दिल्या नंतर, प्रोडक्शन चालू करावे.\nजर इन्स्पेक्टरने approval दिला नाही तर तो जॉब रिजेक्ट करावा व इन्स्पेक्टर ने सांगितलेले correction करून नवीन जॉब मारावा व इंस्पेक्टरचे approval घेऊनच प्रोडक्शन सुरु करावे.', freq: 'प्रत्येक शिफ्टला', rec: 'फर्स्ट पिस रिपोर्ट' },
+        { id: 'op_6', text: 'मशीन ब्रेक डाउन किंवा पॉवर ऑफ नंतर परत चालू करण्या पूर्वी परत एकदा स्टार्ट उप आणि फर्स्ट पीस approval करून घ्यावे.', freq: 'मशीन ब्रेक डाउन किंवा पॉवर ऑफ नंतर', rec: 'स्टार्टअप चेक शीट / फर्स्ट पिस रिपोर्ट' },
+        { id: 'op_7', text: 'मशीन वर टूल चेंज अलार्म आल्या वर ठरलेले प्रोसेस प्रमाणे टूल चेंज करणे व टूल चेंज नंतरचा पहिला जॉब चेक करणे.\nजर जॉब ओके असेल तर मशीन चालू ठेवणे जर जॉब रिजेक्ट असेल तर त्यावर लाल रंग लावून जॉब रिजेकशन बिन मध्ये टाकावा व परत नवीन जॉब घेऊन तो ओके करावा.', freq: 'टूल चेंज प्रमाणे', rec: 'फर्स्ट पिस रिपोर्ट' },
+        { id: 'op_8', text: 'इनप्रोसेस इन्स्पेक्टरने सांगितल्या वर जॉब मध्ये correction करून, इन्स्पेक्टर चे approval घ्यावे नाही तर तो पर्यंत प्रोडक्शन बंद ठेवावे.', freq: 'इनप्रोसेस इन्स्पेक्टरने सांगितल्या वर', rec: 'इनप्रोसेस रिपोर्ट' },
+        { id: 'op_9', text: 'जर मशीन बंद पडले किंवा मशीन मधून ऍबनॉर्मल आवाज किंवा व्हायब्रेशन येत असल्यास मेन्टेनन्स ऑपरेटर ला कळवावे.', freq: 'ब्रेक डाउन नंतर', rec: 'ब्रेक डाउन स्लिप' },
+        { id: 'op_10', text: 'दिलेल्या रिपोर्ट प्रमाणे जॉब मारावे, शिफ्ट संपल्यावर प्रोडक्शन रिपोर्ट भरावा.', freq: 'प्रत्येक शिफ्टला', rec: 'प्रोडक्शन रिपोर्ट' },
+        { id: 'op_11', text: 'जर प्रोडक्शन लाईन वर नवीन जॉब लावायचा असेल तर प्रोडक्शन स्टार्ट करण्यापूर्वी कंट्रोल प्लॅन प्रमाणे सगळे प्रोसेस पॅरामीटर्स चेक करणे आणि सर्व प्रोसेस पॅरामीटर्स ओक असतील तरच मशीन चालू करणे.\nजर एकदा पॅरामीटर टॉलरन्सच्या बाहेर असेल तर तो रीसेट करून, सुपरवायझर ला सांगावे.\nसर्व रिडींग स्टार्टअप चेक किंवा सेटउप चेंज शीट मध्ये लिहावे व त्यावर सुपरवायझरचे साइन घ्यावी.', freq: 'सेटउप चेंज करतेवेळी', rec: 'स्टार्टअप चेक किंवा सेटउप चेंज शीट' },
+        { id: 'op_12', text: 'बोरिंग किंवा स्क्रॅप ची ट्रॉली भरल्या नंतर, भरलेली ट्रॉली ठरलेल्या जागी ठेवावी व रिकामी ट्रॉली बोरिंग / स्क्रॅप कन्वेयर खाली लावावी.', freq: 'बोरिंग किंवा स्क्रॅप ची ट्रॉली भरल्या नंतर', rec: '----' },
+        { id: 'op_13', text: 'मशीन मध्ये कूलंट भरावे लागत असेल तर ते भरणे.', freq: 'लागत असेल तर', rec: '----' },
+        { id: 'op_14', text: 'शिफ्ट संपल्यावर मशीन आतून स्वच्छ करणे व वापरलेले टूल्स, पाणा , ऍलन की इत्यादी ठरवलेल्या ठिकाणी ठेवणे.\nरेपोर्टच्या फाइल्स ठरवलेल्या ठिकाणी ठेवावे.', freq: 'प्रत्येक शिफ्टला', rec: '----' }
+      ],
+      Inspector: [
+        { id: 'in_1', text: 'शिफ्टच्या सुरवातीला शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड चेक करणे. त्यावर जर काही सूचना असतील तर ते अमलात आणने .', freq: 'प्रत्येक शिफ्टला', rec: 'शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड' },
+        { id: 'in_2', text: 'ऑपरेटर कढून पहिला जॉब (फर्स्ट पिस Approval ) आल्या नंतर तो कंट्रोल प्लॅन प्रमाणे चेक करावा जर जॉब ओके असेल तर ऑपरेटरला पुढचे जॉब मारायला सांगणे.\nजर जॉब नॉट ओके असेल तर कोणत्या पॅरामीटर्स साठी नॉट ओके आहे ते ऑपरेटरला सांगुन जॉब करेक्ट करून घ्यावा.\nजॉब ओके झाल्यावरच ऑपरेटरला पुढचे जॉब मारायला सांगावे.', freq: 'प्रत्येक शिफ्टला', rec: 'फर्स्ट पिस रिपोर्ट' },
+        { id: 'in_3', text: 'प्रॊडक्टशन चालू झाल्या नंतर कंट्रोल प्लॅन वर दर्शवल्या प्रमाणे दिलेल्या वेळे नंतर किंवा ठरून दिलेल्या जॉब नंतर, प्रोडक्शन झालेला जॉब चेक करावा जर जॉब ओके असेल तर ऑपरेटरला पुढचे जॉब मारायला सांगणे.\nजर जॉब नॉट ओके असेल तर कोणत्या पॅरामीटर्स साठी नॉट ओके आहे ते ऑपरेटरला सांगुन जॉब करेक्ट करून घ्यावा.\nजॉब ओके झाल्यावरच ऑपरेटरला पुढचे जॉब मारायला सांगावे.', freq: 'प्रत्येक शिफ्टला', rec: 'इनप्रोसेस रिपोर्ट' },
+        { id: 'in_4', text: 'कंट्रोल प्लॅन वर दर्शवल्या प्रमाणे सर्व कंट्रोल्स अमलात आणने जसे १००% इन्स्पेक्शन, SPC, कंट्रोल चार्ट इत्यादी व त्याचे रेकॉर्डस् जतन करणे.', freq: 'गरज लागेल तेंव्हा', rec: 'इनप्रोसेस रिपोर्ट / SPC / Control chart' },
+        { id: 'in_5', text: 'कंट्रोल प्लॅन वरती दर्शवल्या प्रमाणे pokayoke व्हेरिफिकेशन करावे व pokayoke व्हेरिफिकेशन रेकॉर्ड भरावे.\nजर pokayoke वर्किंग करत नसेल तर मशीन बंद करून, pokayoke लिस्ट मध्ये दिलेला रिएक्शन प्लॅन प्रमाणे कृती (action plan) करूनच मशीन चालू करावे.\nPokayoke बंद असेलचा रिपोर्ट क्वालिटी सुपरवायझर आणि प्रोडक्शन सुपरवायझर ला कळवावा.', freq: 'प्रत्येक शिफ्टला', rec: 'Pokayoke व्हेरिफिकेशन शीट' },
+        { id: 'in_6', text: 'जर जॉबचा पॅरामीटर चेक करायला किंवा pokayoke व्हेरिफिकेशन करायला किंवा मशीनचे वर्किंग चेक करायला मास्टर सॅम्पल्स लागत असतील तर ते वापरने व वापरा नंतते ठरवून दिलेल्या जागी ठेवावे.', freq: 'प्रत्येक शिफ्टला', rec: 'मास्टर सॅम्पल्स व्हेरिफिकेशन रेकॉर्ड' },
+        { id: 'in_7', text: 'प्रॊडक्टशन मध्ये किंवा फर्स्ट पिस किंवा इनप्रोसेस इन्स्पेक्शन करताना जर नॉट ओके जॉब आढळल्यास त्या जॉब वर लाल कलर लावून तो जॉब रिजेक्शन बिन मध्ये ठेवावा.\nजर एखादा जॉब क्रिटिकल (SC / CC / Major इत्यादी ) पॅरामीटर साठी रिजेक्ट झाला किंवा दररोजच्या लिमिट पेक्षा जास्त रिजेक्शन ट्रेंड आढळल्यास प्रॊडक्टशन बंद करण्यास सांगून क्वालिटी सुपरवायझर आणि प्रोडक्शन सुपरवायझर ला रिपोर्ट कळवावे.', freq: 'गरज लागेल तेंव्हा', rec: 'इनप्रोसेस रिपोर्ट' },
+        { id: 'in_8', text: 'गेजस किंवा मेझरिंग इक्विपमेंट्स काळज़ी पूर्वक हाताळवे व ठरवून दिलेल्या पद्धतीने जतन / स्टोरेज करावे.\nदररोजच्या वापरातील गेजस किंवा मेझरिंग इक्विपमेंट्सचे कॅलिब्रेशन आहे का नाही ते पाहणे व नसल्यास किंवा ड्यू डेट झाली असल्यास ते क्वालिटी सुपरवायझर ला रिपोर्ट कळवावे.', freq: 'प्रत्येक शिफ्टला', rec: '----' },
+        { id: 'in_9', text: 'शिफ्ट संपल्यावर इन्स्पेक्शन टेबल स्वच्छ करणे व वापरलेले गेजस किंवा मेझरिंग इक्विपमेंट्स इत्यादी ठरवलेल्या ठिकाणी ठेवणे.\nरेपोर्टच्या फाइल्स ठरवलेल्या ठिकाणी ठेवावे.', freq: 'प्रत्येक शिफ्टला', rec: '----' },
+        { id: 'in_10', text: 'इनप्रोसेस / फिनिश / इनकमिंग / रिजेक्ट / होल्ड इत्यादी जॉब चे आयडेंटिफिकेशन टॅग लावणे.', freq: 'गरज लागेल तेंव्हा', rec: '----' }
+      ],
+      SupProduction: [
+        { id: 'sp_1', text: 'शिफ्टच्या सुरवातीला शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड चेक करणे. त्यावर जर काही सूचना असतील तर ते संबंधीत ऑपरेटर / इनस्पेक्टर यांना सांगुन अमलात आणने .', freq: 'प्रत्येक शिफ्टला', rec: 'शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड' },
+        { id: 'sp_2', text: 'ठरवून दिल्या प्रमाणे ऑपरेटर - स्टार्टअप, मशीन लेवल - I मेंटेनन्स आणि सेटअप approval करून त्याचे रेकॉर्ड जतन करतात का ते पहाणे.\nस्टार्टअप, मशीन लेवल - I मेंटेनन्स आणि सेटअप approval कंट्रोल प्लॅन मध्ये दिलेल्या frequency प्रमाणे होते का हे पहाणे व त्या प्रमाणे करून घेणे. स्टार्टअप, मशीन लेवल - I मेंटेनन्स आणि सेटअप approval रिपोर्ट चेक करून approve करावे.', freq: 'प्रत्येक शिफ्टला', rec: 'स्टार्टअप, मशीन लेवल - I मेंटेनन्स आणि सेटअप चेक शीट' },
+        { id: 'sp_3', text: 'ऑपरेटर - फर्स्ट पिस approval मिळाल्या नंतरच प्रॊडक्टशन चालू करत्यात का ते पहावे व फर्स्ट पिस approval नंतरच प्रॊडक्टशन चालू करावे.\nमशीन ब्रेक डाउन किंवा पॉवर ऑफ नंतर परत चालू करण्या पूर्वी ऑपरेटर - क्वालिटी approval मिळाल्या नंतरच प्रॊडक्टशन चालू करतात का ते पहावे व क्वालिटी approval नंतरच प्रॊडक्टशन चालू करावे', freq: 'प्रत्येक शिफ्टला', rec: 'मशीन लेवल - I मेंटेनन्स चे चेक पॉईंट शीट' },
+        { id: 'sp_4', text: 'ऑपरेटर - कंट्रोल प्लॅन वर दिलेली टूल चेंज फ्रिक्वेन्सी फॉलो करतात का ते पहावे व कंट्रोल प्लॅन प्रमाणे टूल चेंज फ्रिक्वेन्सी फॉलो करावी.', freq: 'प्रत्येक शिफ्टला', rec: 'टूल चेंज अलार्म' },
+        { id: 'sp_5', text: 'ऑपरेटर - इनप्रोसेस इन्स्पेक्टरने सांगितल्या वर जॉब मध्ये correction करतात का ते पहावे व correction केल्यावर इन्स्पेक्टर चे approval घेऊनच काम सुरु ठेवत्यात का ते पहावे.', freq: 'प्रत्येक शिफ्टला', rec: 'फर्स्ट पिस रिपोर्ट' },
+        { id: 'sp_6', text: 'मशिन बंद पडल्यावर किंवा मशीन मधून ऍबनॉर्मल आवाज किंवा व्हायब्रेशन येत असल्यास मेन्टेनन्स ऑपरेटरला सांगून मशिन लवकरात लवकर चालू करावे.\nमशिन बंद पडलेला रिपोर्ट प्रोडक्शन मॅनेजरला कळवावा.', freq: 'मशीन ब्रेक डाउन किंवा पॉवर ऑफ नंतर', rec: 'स्टार्टअप चेक शीट / फर्स्ट पिस रिपोर्ट / मशीन ब्रेक डाउन स्लिप' },
+        { id: 'sp_7', text: 'दिलेल्या रिपोर्ट प्रमाणे ऑपरेटर जॉब मारतात का ते पहावे जर ऑपरेटरला काही प्रॉब्लेम असेल तर आढळलेला प्रॉब्लेम प्रोडक्शन मॅनेजरला सांगावा व त्यांनी सांगितल्या प्रमाणे तात्पुरती कृती (Containment action) / कायमस्वरूपी कृती (Permenant action) अंमलबजावणी करावी.\nशिफ्ट संपल्यावर प्रोडक्शन रिपोर्ट चेक करावा व approve करावा.', freq: 'प्रत्येक शिफ्टला', rec: 'प्रोडक्शन रिपोर्ट' },
+        { id: 'sp_8', text: 'प्रोडक्शन लाईन वर नवीन जॉब लावताना, ऑपरेटर स्टार्टअप चेक किंवा सेटउप चेंज फॉलो करतात का ते पहावे व स्टार्टअप चेक किंवा सेटउप चेंज approval नंतरच प्रोडक्शन स्टार्ट करावे.\nजर एकदा पॅरामीटर टॉलरन्सच्या बाहेर असेल तर तो रीसेट करून दयावा .', freq: 'सेटउप चेंज करतेवेळी', rec: 'स्टार्टअप चेक किंवा सेटउप चेंज शीट' },
+        { id: 'sp_9', text: 'बोरिंग किंवा स्क्रॅप ची ट्रॉली भरल्या नंतर, बोरिंग किंवा स्क्रॅप उचलणाऱ्या डिपार्टमेंटला संपर्क साधुन बोरिंग किंवा स्क्रॅपच्या ट्रॉल्या रिकाम्या करून घ्याव्यात.', freq: 'बोरिंग किंवा स्क्रॅप ची ट्रॉली भरल्या नंतर', rec: '----' },
+        { id: 'sp_10', text: 'मशिन मधून जर कूलंट किंवा ऑइल लिकेज होत असेल तर मेन्टेनन्स डिपार्टमेंटला सांगून मशिन ओके करून घ्यावे.\nठरलेल्या प्रमाणे मशिन स्वच्छ करणाऱ्या टिम कढून मशिन स्वच्छ करुन घ्यावे.\nहाऊस किपिंग करणाऱ्या टिम कढून मशिन सभोतालचा परिसर / शॉप फ्लोअर स्वच्छ करुन घ्यावे.', freq: 'दररोज', rec: "मशीन ब्रेक डाउन स्लिप / 5 'S' ऑडिट चेक शीट" },
+        { id: 'sp_11', text: '4 M चेंज मॅनेजमेंट रुल प्रमाणे, ज्यावेळी ऐखादा 4 M चेंज मॅनेजमेंट होइल त्यावेळी त्या चेंज संबंधित ज्या सूचना दिल्या आहेत त्या अंमलात आणुन, संबंधित डॉक्युमेंट अपडेट करावे.', freq: 'गरज लागेल तेंव्हा', rec: '4M रेकॉर्ड शिट / संबंधित डॉक्युमेंट' },
+        { id: 'sp_12', text: 'जर रिवर्कला परवानगी दिली असेल तर रिवर्क वर्क इन्स्ट्रक्शन्स प्रमाणे ठरवून दिलेल्या प्रॊडक्टशन ऑपरेटर कडून रिवर्क करून घ्यावे. नंतर रिवर्क केलेले जॉब रिवर्क इन्स्पेक्शन साठी क्वालिटी सुपरवायझरला दयावेत.', freq: 'प्रत्येक शिफ्टला', rec: 'रिवर्क इन्स्पेक्शन रिपोर्ट' },
+        { id: 'sp_13', text: 'मशनिंग सेल / लाईन वर पिवळे पट्टे मारणे. सर्व मटेरियल (बिन / पॅलेट इत्यादी ) पिवळ्या पट्याच्या आत ठेवणे.', freq: 'गरज लागेल तेंव्हा', rec: '----' },
+        { id: 'sp_14', text: 'प्रोडक्शन प्लॅन प्रमाणे जॉब मारणे व इन्स्पेक्शन साठी क्वालिटी डिपार्टमेंटला दयावेत', freq: 'प्रत्येक शिफ्टला', rec: 'प्रोडक्शन प्लॅन / डिस्पॅच प्लॅन' }
+      ],
+      SupQuality: [
+        { id: 'sq_1', text: 'शिफ्टच्या सुरवातीला शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड चेक करणे. त्यावर जर काही सूचना असतील तर ते संबंधीत ऑपरेटर / इनस्पेक्टर यांना सांगुन अमलात आणने .', freq: 'प्रत्येक शिफ्टला', rec: 'शिफ्ट कॅम्युनिकेशन लॉग बुक किंवा डेली मिटींग बोर्ड' },
+        { id: 'sq_2', text: 'ठरवून दिल्या प्रमाणे इन्स्पेक्टर - इंनप्रोसेस / इनकमिंग / फायनल इन्स्पेक्शन करून, रेकॉर्ड जतन करतात का ते पहाणे.\nफर्स्ट पिस / इनप्रोसेस रिपोर्ट / Pokayoke व्हेरिफिकेशन कंट्रोल प्लॅन मध्ये दिलेल्या frequency प्रमाणे होते का हे पहाणे व त्या प्रमाणे करून घेणे. फर्स्ट पिस / इनप्रोसेस रिपोर्ट / Pokayoke व्हेरिफिकेशन रिपोर्ट चेक करून approve करावे.', freq: 'प्रत्येक शिफ्टला', rec: 'फर्स्ट पिस / इनप्रोसेस रिपोर्ट / Pokayoke व्हेरिफिकेशन' },
+        { id: 'sq_3', text: 'शिफ्ट प्रमाणे रिजेक्शन डिटेल्स गोळा करणे, रिजेक्शन quantity व्हेरिफिकेशन करणे.\nरिजेक्शन analysis करून, कृती आराखडा तयार करणे.\nफॉन्ड्री क्वालिटी सुपरवायझर / इन्स्पेक्टर बरोबर समन्वय साधुन रिजेक्टेड जॉबचे विल्हेवाट लावावी.', freq: 'प्रत्येक शिफ्टला', rec: 'रिजेक्शन रिपोर्ट' },
+        { id: 'sq_4', text: 'कंट्रोल प्लॅन वर दर्शवल्या प्रमाणे सर्व कंट्रोल्स ( SPC स्टडी / कंट्रोल चार्ट / १००% इन्स्पेक्शन इत्यादी ) अमलात आहेत का नाही ते पाहणे व ते अमलात आणने.\nजर काही तक्रार किंवा क्वालिटी प्रॉब्लेम आल्यास, कंट्रोल प्लॅन वर सांगितल्या प्रमाणे (reaction plan) कृती करणे. SPC स्टडी / कंट्रोल चार्ट / १००% इन्स्पेक्शन रिपोर्ट इत्यादी चेक करणे.', freq: 'प्रत्येक शिफ्टला', rec: 'फर्स्ट पिस / इनप्रोसेस रिपोर्ट / Pokayoke व्हेरिफिकेशन' },
+        { id: 'sq_5', text: 'जर pokayoke वर्किंग करत नसेल तर मशीन बंद करून, pokayoke लिस्ट मध्ये दिलेला रिएक्शन प्लॅन प्रमाणे कृती (action plan) करूनच मशीन चालू करावे. Pokayoke प्रॉब्लेम संबंधित डिपार्टमेंटला सांगून pokayoke चालू करून घ्यावा.', freq: 'प्रत्येक शिफ्टला', rec: 'Pokayoke व्हेरिफिकेशन' },
+        { id: 'sq_6', text: 'जॉबच्या किंवा मशीन साठी लागणारे मास्टर सॅम्पल्स नीट जतन करावे व त्याची योग्यती स्वच्छता राखावी.\nठराविक कालावधी नंतर मास्टर सॅम्पल्स चेक करावे व गरज असल्यास ते बदलावे .\nमास्टर सॅम्पला आयडेंटिफिकेशन साठी (पिवळा कलर) लाऊन त्या वर मास्टर सॅम्पलचे डिटेल्स लिहावे.', freq: 'प्रत्येक आठवड्याला', rec: 'मास्टर पार्ट लिस्ट' },
+        { id: 'sq_7', text: 'जर एखादा जॉब क्रिटिकल (SC / CC / Major इत्यादी ) पॅरामीटर साठी रिजेक्ट झाला किंवा दररोजच्या लिमिट पेक्षा जास्त रिजेक्शन ट्रेंड आढळल्यास प्रॊडक्टशन बंद करण्यास सांगून, तात्पुरती कृती (Containment action) अंमलबजावणी करूनच प्रॊडक्टशन सुरु करावे.\nआढळलेला प्रॉब्लेम क्वालिटी मॅनेजरला सांगावा व त्यांनी सांगितल्या प्रमाणे कायमस्वरूपी कृती (Permenant action) अंमलबजावणी करावी.', freq: 'प्रत्येक शिफ्टला', rec: 'रिजेक्शन रिपोर्ट / 8D रिपोर्ट' },
+        { id: 'sq_8', text: 'इन्स्पेक्टर किंवा ऑपरेटर यांची प्रोडक्ट क्वालिटी, गेजस किंवा मेझरिंग इक्विपमेंट्स इत्यादी बद्दल काही तक्रार असेल तर त्याचे निवारण करणे.\nगेजस किंवा मेझरिंग इक्विपमेंट्स कॅलिब्रेशन प्लॅन प्रमाणे, स्टॅण्डर्ड रूमला कॅलिब्रेशन साठी दयावित.', freq: 'प्रत्येक शिफ्टला', rec: 'कॅलिब्रेशन प्लॅन' },
+        { id: 'sq_9', text: 'शिफ्ट संपल्या नंतर इन्स्पेक्टर ने इन्स्पेक्शन टेबल स्वच्छ केले आहे का ते पाहणे व केले नसल्यास करून घ्यावे. वापरलेले गेजस किंवा मेझरिंग इक्विपमेंट्स, रेपोर्टच्या फाइल्स ठरवलेल्या ठिकाणी ठेवली आहेत का ते पहाणे नसल्यास ठेवण्यास सांगावे. इनप्रोसेस / फिनिश / इनकमिंग / रिजेक्ट / होल्ड इत्यादी जॉबला आयडेंटिफिकेशन टॅग लावले आहे का ते पहाणे व नसल्यास लावण्यास सांगावे.', freq: 'प्रत्येक शिफ्टला', rec: '----' },
+        { id: 'sq_10', text: '4 M चेंज मॅनेजमेंट रुल प्रमाणे, ज्यावेळी ऐखादा 4 M चेंज मॅनेजमेंट होइल त्यावेळी त्या चेंज संबंधित ज्या सूचना दिल्या आहेत त्या अंमलात आणुन, संबंधित डॉक्युमेंट अपडेट करावे.', freq: 'गरज लागेल तेंव्हा', rec: '4M रेकॉर्ड शिट / संबंधित डॉक्युमेंट' },
+        { id: 'sq_11', text: 'कस्टमर कंप्लेंट / इन हाऊस कंप्लेंट / सप्लायर कंप्लेंट या वर ठरवलेली ॲक्शन अमलात आणने व त्याची सस्टेनन्स चेक करणे.\nजर काही तक्रार असेल तर क्वालिटी मॅनेजरला रिपोर्ट करणे.', freq: 'प्रत्येक शिफ्टला', rec: 'रिजेक्शन रिपोर्ट / 8D रिपोर्ट' },
+        { id: 'sq_12', text: 'जर रिवर्कला परवानगी दिली असेल तर रिवर्क वर्क इन्स्ट्रक्शन्स प्रमाणे ठरवून दिलेल्या प्रॊडक्टशन ऑपरेटर / सुपरवायझर कडून रिवर्क करून घ्यावे.\nरिवर्ककेल्या नंतर ठरवून दिलेल्या रिवर्क इन्स्पेक्टर कडून जॉब चेक करून, ओके जॉब आयडेंटिफिकेशन करून डिस्पॅच करावा', freq: 'प्रत्येक शिफ्टला', rec: 'रिवर्क इन्स्पेक्शन रिपोर्ट' },
+        { id: 'sq_13', text: 'डिस्पॅच डिपार्टमेंट कडून आलेल्या प्लॅन प्रमाणे जॉब चेक करून ओके जॉब डिस्पॅच करणे.', freq: 'प्रत्येक शिफ्टला', rec: 'डिस्पॅच प्लॅन' }
+      ]
+    };
+
+    // --- 3. GLOBAL APPLICATION STATE ---
+    let appState = {
+      meta: {
+        ref: 'JD-20261026-01',
+        plant: 'Building No ०२ (VW / TML / JLR ) शॉप',
+        line: 'HT 382',
+        shift: 'Shift I',
+        auditee: '',
+        auditor: '',
+        date: new Date().toISOString().split('T')[0]
+      },
+      currentRole: 'Operator',
+      scores: {}, 
+      remarks: {}, 
+      photos: {}, 
+      plantEmails: {
+        'Building No ०२ (VW / TML / JLR ) शॉप': 'b2.qa@company.com',
+        'Building No ०३ (Cummins / AL) शॉप': 'b3.qa@company.com',
+        'Building No ०४ (Stellantis) शॉप': 'b4.qa@company.com',
+        'Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप': 'b5.qa@company.com',
+        'Wave Shop': 'wave.qa@company.com',
+        'Avanti Shop': 'avanti.qa@company.com',
+        'Old Ford Shop': 'ford.qa@company.com',
+        'Plot No ३६': 'plot36.qa@company.com',
+        'Pragati Shop': 'pragati.qa@company.com',
+        'Tanaga Shop': 'tanaga.qa@company.com',
+        'Other': 'other.qa@company.com'
+      },
+      cloudAudits: []
+    };
+
+    // --- 4. SIGNATURE CANVAS HELPER ---
+    class DigitalSignaturePad {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        this.isDrawing = false;
+        this.setupCanvas();
+        this.addEvents();
+      }
+      setupCanvas() {
+        this.canvas.width = this.canvas.offsetWidth || 300;
+        this.canvas.height = this.canvas.offsetHeight || 96;
+        this.ctx.lineWidth = 2;
+        this.ctx.lineCap = 'round';
+        this.ctx.strokeStyle = '#1e3a8a';
+      }
+      addEvents() {
+        const getPos = (e) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return { x: clientX - rect.left, y: clientY - rect.top };
+        };
+        const start = (e) => { this.isDrawing = true; const p = getPos(e); this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); e.preventDefault(); };
+        const move = (e) => { if (!this.isDrawing) return; const p = getPos(e); this.ctx.lineTo(p.x, p.y); this.ctx.stroke(); e.preventDefault(); };
+        const end = () => { this.isDrawing = false; };
+
+        this.canvas.addEventListener('mousedown', start);
+        this.canvas.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+        this.canvas.addEventListener('touchstart', start, { passive: false });
+        this.canvas.addEventListener('touchmove', move, { passive: false });
+        window.addEventListener('touchend', end);
+      }
+      clear() {
+        if (!this.ctx) return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      }
+    }
+
+    let padAuditor = null;
+    let padAuditee = null;
+
+    // --- 5. INITIALIZATION & STORAGE ---
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSettings();
+      bindMetaInputs();
+      renderChecklistCards();
+      setupRoleTabs();
+      setupNavigation();
+      initSignatures();
+      bindActionButtons();
+      listenToFirebaseCloud();
+      refreshAnalyticsAndMatrix();
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      if (toast && toastMsg) {
+        toastMsg.textContent = msg;
+        toast.classList.remove('opacity-0', 'pointer-events-none');
+        setTimeout(() => toast.classList.add('opacity-0', 'pointer-events-none'), 2600);
+      }
+    }
+
+    function loadSettings() {
+      const savedEmails = localStorage.getItem('jd_plant_emails_v2');
+      if (savedEmails) {
+        try { appState.plantEmails = Object.assign(appState.plantEmails, JSON.parse(savedEmails)); } catch(e){}
+      }
+      const dateEl = document.getElementById('meta-date');
+      if (dateEl) dateEl.value = appState.meta.date;
+    }
+
+    function bindMetaInputs() {
+      const plantEl = document.getElementById('meta-plant');
+      const lineEl = document.getElementById('meta-line');
+      const shiftEl = document.getElementById('meta-shift');
+      const auditeeEl = document.getElementById('meta-auditee');
+      const auditorEl = document.getElementById('meta-auditor');
+      const dateEl = document.getElementById('meta-date');
+
+      const updateMeta = () => {
+        if (plantEl) appState.meta.plant = plantEl.value;
+        if (lineEl) appState.meta.line = lineEl.value.trim().toUpperCase();
+        if (shiftEl) appState.meta.shift = shiftEl.value;
+        if (auditeeEl) appState.meta.auditee = auditeeEl.value.trim();
+        if (auditorEl) appState.meta.auditor = auditorEl.value.trim();
+        if (dateEl) appState.meta.date = dateEl.value;
+        updateMetaBadges();
+      };
+
+      [plantEl, lineEl, shiftEl, auditeeEl, auditorEl, dateEl].forEach(el => {
+        if (el) el.addEventListener('input', updateMeta);
+        if (el && el.tagName === 'SELECT') el.addEventListener('change', updateMeta);
+      });
+      updateMetaBadges();
+    }
+
+    function updateMetaBadges() {
+      const summaryEl = document.getElementById('meta-summary-display');
+      if (summaryEl) {
+        summaryEl.textContent = `${appState.meta.plant} | ${appState.meta.line || 'Line'} | ${appState.meta.shift}`;
+      }
+      const refEl = document.getElementById('header-ref-display');
+      if (refEl) {
+        refEl.textContent = `REF: ${appState.meta.ref}`;
+      }
+    }
+
+    function initSignatures() {
+      padAuditor = new DigitalSignaturePad('canvas-auditor');
+      padAuditee = new DigitalSignaturePad('canvas-auditee');
+
+      const btnClearAuditor = document.getElementById('btn-clear-sig-auditor');
+      if (btnClearAuditor) btnClearAuditor.addEventListener('click', () => padAuditor && padAuditor.clear());
+
+      const btnClearAuditee = document.getElementById('btn-clear-sig-auditee');
+      if (btnClearAuditee) btnClearAuditee.addEventListener('click', () => padAuditee && padAuditee.clear());
+    }
+
+    function setupRoleTabs() {
+      const buttons = document.querySelectorAll('.role-btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          buttons.forEach(b => {
+            b.classList.remove('bg-blue-700', 'text-white', 'border-blue-700', 'shadow-sm');
+            b.classList.add('bg-slate-50', 'text-slate-700', 'border-slate-200');
+          });
+          btn.classList.add('bg-blue-700', 'text-white', 'border-blue-700', 'shadow-sm');
+          btn.classList.remove('bg-slate-50', 'text-slate-700', 'border-slate-200');
+          appState.currentRole = btn.dataset.role;
+          renderChecklistCards();
+        });
+      });
+    }
+
+    function setupNavigation() {
+      const tabDaily = document.getElementById('nav-tab-daily');
+      const tabSummary = document.getElementById('nav-tab-summary');
+      const viewDaily = document.getElementById('view-daily-audit');
+      const viewSummary = document.getElementById('view-monthly-summary');
+
+      if (tabDaily && tabSummary && viewDaily && viewSummary) {
+        tabDaily.addEventListener('click', () => {
+          tabDaily.classList.add('text-white', 'border-white');
+          tabDaily.classList.remove('text-blue-200', 'border-transparent');
+          tabSummary.classList.add('text-blue-200', 'border-transparent');
+          tabSummary.classList.remove('text-white', 'border-white');
+          viewDaily.classList.remove('hidden');
+          viewSummary.classList.add('hidden');
+        });
+
+        tabSummary.addEventListener('click', () => {
+          tabSummary.classList.add('text-white', 'border-white');
+          tabSummary.classList.remove('text-blue-200', 'border-transparent');
+          tabDaily.classList.add('text-blue-200', 'border-transparent');
+          tabDaily.classList.remove('text-white', 'border-white');
+          viewDaily.classList.add('hidden');
+          viewSummary.classList.remove('hidden');
+          refreshAnalyticsAndMatrix();
+        });
+      }
+
+      const toggleMetaBtn = document.getElementById('toggle-meta-btn');
+      const metaBody = document.getElementById('meta-form-body');
+      if (toggleMetaBtn && metaBody) {
+        toggleMetaBtn.addEventListener('click', () => metaBody.classList.toggle('hidden'));
+      }
+    }
+
+    // --- 6. RENDER CHECKLIST CARDS ---
+    function renderChecklistCards() {
+      const container = document.getElementById('checklist-cards-container');
+      if (!container) return;
+
+      const items = CHECKLIST_DATABASE[appState.currentRole] || [];
+      container.innerHTML = '';
+
+      items.forEach((item, index) => {
+        const currentScore = appState.scores[item.id] !== undefined ? appState.scores[item.id] : null;
+        const currentRemark = appState.remarks[item.id] || '';
+        const currentPhoto = appState.photos[item.id] || null;
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 space-y-2.5";
+        card.id = `card-${item.id}`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between space-x-2">
+            <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+              ${index + 1}
+            </span>
+            <div class="flex-1 text-xs sm:text-sm font-semibold text-slate-800 whitespace-pre-line leading-relaxed">
+              ${item.text}
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 bg-slate-50 p-1.5 rounded-lg border border-slate-150">
+            <span class="inline-flex items-center space-x-1 font-medium text-slate-700">
+              <i class="ph-bold ph-clock"></i>
+              <span>फ्रिक्वेन्सी: <b>${item.freq}</b></span>
+            </span>
+            <span class="text-slate-300">•</span>
+            <span class="inline-flex items-center space-x-1 font-medium text-slate-700">
+              <i class="ph-bold ph-file-text"></i>
+              <span>रेकॉर्ड: <b>${item.rec}</b></span>
+            </span>
+          </div>
+
+          <!-- Score Buttons -->
+          <div class="grid grid-cols-4 gap-1.5 text-xs font-bold pt-1">
+            <button onclick="setScore('${item.id}', 2)" class="touch-target py-2 rounded-lg border flex items-center justify-center space-x-1 transition ${currentScore === 2 ? 'bg-emerald-600 text-white border-emerald-600 shadow' : 'bg-slate-50 text-emerald-800 border-slate-200 hover:bg-emerald-50'}">
+              <i class="ph-bold ph-check"></i>
+              <span>२ (पूर्ण)</span>
+            </button>
+            <button onclick="setScore('${item.id}', 1)" class="touch-target py-2 rounded-lg border flex items-center justify-center space-x-1 transition ${currentScore === 1 ? 'bg-amber-500 text-white border-amber-500 shadow' : 'bg-slate-50 text-amber-800 border-slate-200 hover:bg-amber-50'}">
+              <i class="ph-bold ph-minus"></i>
+              <span>१ (अंशतः)</span>
+            </button>
+            <button onclick="setScore('${item.id}', 0)" class="touch-target py-2 rounded-lg border flex items-center justify-center space-x-1 transition ${currentScore === 0 ? 'bg-rose-600 text-white border-rose-600 shadow' : 'bg-slate-50 text-rose-800 border-slate-200 hover:bg-rose-50'}">
+              <i class="ph-bold ph-x"></i>
+              <span>० (नाही)</span>
+            </button>
+            <button onclick="setScore('${item.id}', 'NA')" class="touch-target py-2 rounded-lg border flex items-center justify-center space-x-1 transition ${currentScore === 'NA' ? 'bg-slate-700 text-white border-slate-700 shadow' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}">
+              <span>NA</span>
+            </button>
+          </div>
+
+          <!-- Remark and Camera Input -->
+          <div class="flex items-center space-x-2 pt-1 text-xs">
+            <input type="text" placeholder="काही शेरा / सुधारात्मक कृती..." value="${currentRemark}" onchange="setRemark('${item.id}', this.value)" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg flex items-center space-x-1 font-semibold flex-shrink-0">
+              <i class="ph-bold ph-camera"></i>
+              <span>${currentPhoto ? 'फोटो OK' : 'फोटो'}</span>
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="attachPhoto('${item.id}', this)">
+            </label>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      calculateAndRenderScore();
+    }
+
+    window.setScore = function(id, val) {
+      appState.scores[id] = val;
+      renderChecklistCards();
+    };
+
+    window.setRemark = function(id, val) {
+      appState.remarks[id] = val;
+    };
+
+    window.attachPhoto = function(id, input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          appState.photos[id] = e.target.result;
+          renderChecklistCards();
+          showToast('फोटो जोडला गेला!');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    };
+
+    // --- 7. SCORING ENGINE ---
+    function calculateScore() {
+      const items = CHECKLIST_DATABASE[appState.currentRole] || [];
+      let earned = 0;
+      let applicableCount = 0;
+      let count2 = 0, count1 = 0, count0 = 0;
+
+      items.forEach(it => {
+        const sc = appState.scores[it.id];
+        if (sc === 2) { earned += 2; applicableCount++; count2++; }
+        else if (sc === 1) { earned += 1; applicableCount++; count1++; }
+        else if (sc === 0) { applicableCount++; count0++; }
+      });
+
+      const maxPossible = applicableCount * 2;
+      const pct = maxPossible > 0 ? ((earned / maxPossible) * 100).toFixed(1) : 0;
+
+      return { earned, maxPossible, pct, count2, count1, count0 };
+    }
+
+    function calculateAndRenderScore() {
+      const { earned, maxPossible, pct, count2, count1, count0 } = calculateScore();
+      
+      const pctEl = document.getElementById('current-score-pct');
+      const fracEl = document.getElementById('current-score-fraction');
+      const b2 = document.getElementById('badge-count-2');
+      const b1 = document.getElementById('badge-count-1');
+      const b0 = document.getElementById('badge-count-0');
+
+      if (pctEl) pctEl.textContent = `${pct}%`;
+      if (fracEl) fracEl.textContent = `(${earned} / ${maxPossible} गुण)`;
+      if (b2) b2.textContent = `२: ${count2}`;
+      if (b1) b1.textContent = `१: ${count1}`;
+      if (b0) b0.textContent = `०: ${count0}`;
+    }
+
+    // --- 8. ACTION BUTTONS & RESET ---
+    function bindActionButtons() {
+      const btnNewHeader = document.getElementById('btn-header-new-audit');
+      const btnReset = document.getElementById('btn-reset-current');
+      const triggerNew = () => {
+        if (confirm('नवीन ऑडिट सुरू करायचे आहे का? चालू न सेव्ह केलेला डेटा क्लिअर होईल.')) {
+          resetCurrentAuditForm();
+        }
+      };
+      if (btnNewHeader) btnNewHeader.addEventListener('click', triggerNew);
+      if (btnReset) btnReset.addEventListener('click', triggerNew);
+
+      const btnCloud = document.getElementById('btn-save-cloud');
+      if (btnCloud) btnCloud.addEventListener('click', saveAuditToCloud);
+
+      const btnOpenEmail = document.getElementById('btn-open-email-modal');
+      const btnCloseEmail = document.getElementById('btn-close-email-modal');
+      const emailModal = document.getElementById('modal-email');
+
+      if (btnOpenEmail && emailModal) {
+        btnOpenEmail.addEventListener('click', () => {
+          populateEmailModal();
+          emailModal.classList.remove('hidden');
+        });
+      }
+      if (btnCloseEmail && emailModal) {
+        btnCloseEmail.addEventListener('click', () => emailModal.classList.add('hidden'));
+      }
+
+      const btnMailto = document.getElementById('btn-send-email-mailto');
+      const btnShare = document.getElementById('btn-send-email-share');
+      if (btnMailto) btnMailto.addEventListener('click', triggerMailto);
+      if (btnShare) btnShare.addEventListener('click', triggerWebShare);
+
+      const btnConfigEmails = document.getElementById('btn-config-emails');
+      const modalSettings = document.getElementById('modal-plant-settings');
+      const btnCloseSettings = document.getElementById('btn-close-settings-modal');
+      const btnSaveSettings = document.getElementById('btn-save-email-settings');
+
+      if (btnConfigEmails && modalSettings) {
+        btnConfigEmails.addEventListener('click', () => {
+          document.getElementById('setting-b2').value = appState.plantEmails['Building No ०२ (VW / TML / JLR ) शॉप'] || '';
+          document.getElementById('setting-b3').value = appState.plantEmails['Building No ०३ (Cummins / AL) शॉप'] || '';
+          document.getElementById('setting-b4').value = appState.plantEmails['Building No ०४ (Stellantis) शॉप'] || '';
+          document.getElementById('setting-b5').value = appState.plantEmails['Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप'] || '';
+          document.getElementById('setting-wave').value = appState.plantEmails['Wave Shop'] || '';
+          document.getElementById('setting-avanti').value = appState.plantEmails['Avanti Shop'] || '';
+          document.getElementById('setting-ford').value = appState.plantEmails['Old Ford Shop'] || '';
+          document.getElementById('setting-plot36').value = appState.plantEmails['Plot No ३६'] || '';
+          document.getElementById('setting-pragati').value = appState.plantEmails['Pragati Shop'] || '';
+          document.getElementById('setting-tanaga').value = appState.plantEmails['Tanaga Shop'] || '';
+          document.getElementById('setting-other').value = appState.plantEmails['Other'] || '';
+          modalSettings.classList.remove('hidden');
+        });
+      }
+      if (btnCloseSettings && modalSettings) {
+        btnCloseSettings.addEventListener('click', () => modalSettings.classList.add('hidden'));
+      }
+      if (btnSaveSettings && modalSettings) {
+        btnSaveSettings.addEventListener('click', () => {
+          appState.plantEmails['Building No ०२ (VW / TML / JLR ) शॉप'] = document.getElementById('setting-b2').value.trim();
+          appState.plantEmails['Building No ०३ (Cummins / AL) शॉप'] = document.getElementById('setting-b3').value.trim();
+          appState.plantEmails['Building No ०४ (Stellantis) शॉप'] = document.getElementById('setting-b4').value.trim();
+          appState.plantEmails['Building No ०५ (Cummins / TIEI / FCA / AL ) शॉप'] = document.getElementById('setting-b5').value.trim();
+          appState.plantEmails['Wave Shop'] = document.getElementById('setting-wave').value.trim();
+          appState.plantEmails['Avanti Shop'] = document.getElementById('setting-avanti').value.trim();
+          appState.plantEmails['Old Ford Shop'] = document.getElementById('setting-ford').value.trim();
+          appState.plantEmails['Plot No ३६'] = document.getElementById('setting-plot36').value.trim();
+          appState.plantEmails['Pragati Shop'] = document.getElementById('setting-pragati').value.trim();
+          appState.plantEmails['Tanaga Shop'] = document.getElementById('setting-tanaga').value.trim();
+          appState.plantEmails['Other'] = document.getElementById('setting-other').value.trim();
+
+          localStorage.setItem('jd_plant_emails_v2', JSON.stringify(appState.plantEmails));
+          modalSettings.classList.add('hidden');
+          showToast('ईमेल सेटिंग्ज सेव्ह झाल्या!');
+        });
+      }
+
+      // Filter Plant Change in Summary
+      const filterPlant = document.getElementById('filter-plant');
+      if (filterPlant) {
+        filterPlant.addEventListener('change', () => refreshAnalyticsAndMatrix());
+      }
+
+      const filterMonth = document.getElementById('filter-month');
+      if (filterMonth) {
+        filterMonth.addEventListener('change', () => refreshAnalyticsAndMatrix());
+      }
+
+      const btnExcel = document.getElementById('btn-download-excel');
+      if (btnExcel) btnExcel.addEventListener('click', exportToExcelTwoSheets);
+
+      const btnPdf = document.getElementById('btn-export-pdf');
+      if (btnPdf) btnPdf.addEventListener('click', () => window.print());
+    }
+
+    function resetCurrentAuditForm() {
+      const randRef = 'JD-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(10 + Math.random() * 90);
+      appState.meta.ref = randRef;
+      appState.scores = {};
+      appState.remarks = {};
+      appState.photos = {};
+      if (padAuditor) padAuditor.clear();
+      if (padAuditee) padAuditee.clear();
+      updateMetaBadges();
+      renderChecklistCards();
+      showToast('नवीन ऑडिट शीट तयार आहे!');
+    }
+
+    // --- 9. CLOUD SYNC & DELETE LOGIC ---
+    async function saveAuditToCloud() {
+      const { earned, maxPossible, pct } = calculateScore();
+      if (maxPossible === 0) {
+        alert('कृपया किमान काही चेकपॉईंट्स तपासा आणि गुण द्या.');
+        return;
+      }
+
+      const auditRecord = {
+        ref: appState.meta.ref,
+        date: appState.meta.date,
+        plant: appState.meta.plant,
+        line: appState.meta.line || 'Line 1',
+        shift: appState.meta.shift,
+        role: appState.currentRole,
+        auditee: appState.meta.auditee || 'Worker',
+        auditor: appState.meta.auditor || 'Auditor',
+        score: parseFloat(pct),
+        earned: earned,
+        max: maxPossible,
+        scores: appState.scores,
+        remarks: appState.remarks,
+        timestamp: new Date().toISOString()
+      };
+
+      if (isFirebaseOnline && db) {
+        try {
+          await db.collection('daily_audits').add(auditRecord);
+          showToast('क्लाउडवर यशस्वी सेव्ह झाले!');
+        } catch (err) {
+          console.error('Firebase save error:', err);
+          saveLocally(auditRecord);
+          showToast('ऑफलाईन सेव्ह झाले');
+        }
+      } else {
+        saveLocally(auditRecord);
+        showToast('डेटा स्थानिक मेमरीमध्ये सेव्ह झाला!');
+      }
+
+      refreshAnalyticsAndMatrix();
+    }
+
+    function saveLocally(record) {
+      let local = JSON.parse(localStorage.getItem('jd_local_audits') || '[]');
+      local.unshift(record);
+      localStorage.setItem('jd_local_audits', JSON.stringify(local));
+    }
+
+    window.deleteAuditRecord = async function(id) {
+      if (!confirm("तुम्हाला खात्री आहे का? हा ऑडिट रिपोर्ट कायमस्वरूपी डिलीट करायचा आहे?")) {
+        return;
+      }
+
+      try {
+        if (isFirebaseOnline && db && id) {
+          try {
+            await db.collection('daily_audits').doc(id).delete();
+          } catch(e) {}
+        }
+
+        let local = JSON.parse(localStorage.getItem('jd_local_audits') || '[]');
+        local = local.filter(r => r.id !== id && r.ref !== id);
+        localStorage.setItem('jd_local_audits', JSON.stringify(local));
+
+        appState.cloudAudits = appState.cloudAudits.filter(r => r.id !== id && r.ref !== id);
+
+        showToast("रिपोर्ट डिलीट झाला!");
+        refreshAnalyticsAndMatrix();
+      } catch (err) {
+        console.error("Delete error:", err);
+        showToast("डिलीट करताना अडचण आली.");
+      }
+    };
+
+    function listenToFirebaseCloud() {
+      if (isFirebaseOnline && db) {
+        db.collection('daily_audits').orderBy('timestamp', 'desc').limit(150)
+          .onSnapshot(snapshot => {
+            let list = [];
+            snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+            appState.cloudAudits = list;
+            const statusEl = document.getElementById('cloud-status-text');
+            if (statusEl) statusEl.textContent = 'क्लाउड कनेक्टेड';
+            refreshAnalyticsAndMatrix();
+          }, err => {
+            console.warn('Real-time listener notice:', err);
+          });
+      }
+    }
+
+    // --- 10. EMAIL AUTO-MAPPING & COMPOSER ---
+    function populateEmailModal() {
+      const plant = appState.meta.plant;
+      const targetEmail = appState.plantEmails[plant] || 'qa@company.com';
+      const { earned, maxPossible, pct } = calculateScore();
+
+      document.getElementById('email-modal-plant').value = `${plant} (Line: ${appState.meta.line})`;
+      document.getElementById('email-modal-to').value = targetEmail;
+      document.getElementById('email-modal-subject').value = `[Audit Report] ${plant} - ${appState.meta.line} (${appState.currentRole}) - ${pct}% Compliance`;
+
+      const items = CHECKLIST_DATABASE[appState.currentRole] || [];
+      let issues = [];
+      items.forEach(it => {
+        const sc = appState.scores[it.id];
+        if (sc === 0 || sc === 1) {
+          const rm = appState.remarks[it.id] ? ` | शेरा: ${appState.remarks[it.id]}` : '';
+          issues.push(`• [गुण: ${sc}] ${it.text.slice(0, 70)}...${rm}`);
+        }
+      });
+
+      const bodyText = 
+`महोदय,\n
+खालीलप्रमाणे दैनिक जॉब डिस्क्रिप्शन ऑडिट तपासणी पूर्ण झाली आहे:
+
+• प्लॅन्ट / शॉप: ${plant}
+• लाईन / मशिन: ${appState.meta.line}
+• शिफ्ट: ${appState.meta.shift}
+• तपासणीचे पद: ${appState.currentRole}
+• कर्मचारी (Auditee): ${appState.meta.auditee || 'N/A'}
+• ऑडिटरचे नाव: ${appState.meta.auditor || 'N/A'}
+• दिनांक: ${appState.meta.date}
+
+--- स्कोअर सारांश ---
+• मिळालेले गुण: ${earned} / ${maxPossible}
+• कंप्लायन्स टक्केवारी: ${pct}%
+• निष्कर्ष: ${pct >= 85 ? 'PASSED (समाधानकारक)' : 'ACTION REQUIRED (सुधारणा आवश्यक)'}
+
+${issues.length > 0 ? `\n--- सुधारणा आवश्यक असलेले मुद्दे (NC List) ---\n` + issues.join('\n') : '\nसर्व चेकपॉईंट्स योग्यरित्या पाळले गेले आहेत.'}
+
+धन्यवाद,
+${appState.meta.auditor || 'Quality Assurance Team'}
+JD AuditPro Mobile System`;
+
+      document.getElementById('email-modal-body').value = bodyText;
+    }
+
+    function triggerMailto() {
+      const to = encodeURIComponent(document.getElementById('email-modal-to').value);
+      const sub = encodeURIComponent(document.getElementById('email-modal-subject').value);
+      const body = encodeURIComponent(document.getElementById('email-modal-body').value);
+      window.location.href = `mailto:${to}?subject=${sub}&body=${body}`;
+    }
+
+    function triggerWebShare() {
+      const sub = document.getElementById('email-modal-subject').value;
+      const body = document.getElementById('email-modal-body').value;
+      if (navigator.share) {
+        navigator.share({ title: sub, text: body }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(body);
+        showToast('अहवाल क्लिपबोर्डवर कॉपी केला!');
+      }
+    }
+
+    // --- 11. GRAPHICAL ANALYTICS & MATRIX ---
+    let chartPlant = null;
+    let chartLine = null;
+    let chartRole = null;
+
+    function getAllRecords() {
+      const local = JSON.parse(localStorage.getItem('jd_local_audits') || '[]');
+      let all = [...appState.cloudAudits, ...local];
+      
+      const filterPlant = document.getElementById('filter-plant');
+      if (filterPlant && filterPlant.value !== 'All') {
+        all = all.filter(r => r.plant === filterPlant.value);
+      }
+      return all;
+    }
+
+    function refreshAnalyticsAndMatrix() {
+      const records = getAllRecords();
+      const countEl = document.getElementById('total-cloud-records-count');
+      if (countEl) countEl.textContent = `${records.length} नोंदी उपलब्ध`;
+
+      renderSummaryMatrix(records);
+      renderHistoryTable(records);
+      renderCharts(records);
+    }
+
+    function renderSummaryMatrix(records) {
+      const tbody = document.getElementById('summary-matrix-tbody');
+      if (!tbody) return;
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">अद्याप कोणतीही ऑडिट नोंद उपलब्ध नाही.</td></tr>`;
+        return;
+      }
+
+      const map = {};
+      records.forEach(r => {
+        const key = `${r.plant || 'Building No ०२'}__${r.line || 'Line 1'}`;
+        if (!map[key]) {
+          map[key] = { plant: r.plant || 'Building No ०२', line: r.line || 'Line 1', Operator: [], Inspector: [], SupProduction: [], SupQuality: [] };
+        }
+        if (map[key][r.role]) {
+          map[key][r.role].push(r.score);
+        }
+      });
+
+      const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '-';
+
+      tbody.innerHTML = '';
+      Object.values(map).forEach(row => {
+        const opAvg = avg(row.Operator);
+        const inAvg = avg(row.Inspector);
+        const spAvg = avg(row.SupProduction);
+        const sqAvg = avg(row.SupQuality);
+
+        const valid = [opAvg, inAvg, spAvg, sqAvg].filter(v => v !== '-').map(Number);
+        const overall = valid.length ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1) : '-';
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b";
+        tr.innerHTML = `
+          <td class="p-2.5 font-bold text-slate-800">${row.plant}</td>
+          <td class="p-2.5 font-bold text-blue-700">${row.line}</td>
+          <td class="p-2.5 text-center">${opAvg !== '-' ? opAvg + '%' : '-'}</td>
+          <td class="p-2.5 text-center">${inAvg !== '-' ? inAvg + '%' : '-'}</td>
+          <td class="p-2.5 text-center">${spAvg !== '-' ? spAvg + '%' : '-'}</td>
+          <td class="p-2.5 text-center">${sqAvg !== '-' ? sqAvg + '%' : '-'}</td>
+          <td class="p-2.5 text-center font-bold text-slate-900">${overall !== '-' ? overall + '%' : '-'}</td>
+          <td class="p-2.5 text-center">
+            ${overall !== '-' ? (Number(overall) >= 85 ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Pass</span>' : '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">Action</span>') : '-'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderHistoryTable(records) {
+      const tbody = document.getElementById('history-logs-tbody');
+      if (!tbody) return;
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400">कोणतीही ऑडिट नोंद नाही.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      records.slice(0, 30).forEach(r => {
+        const recordId = r.id || r.ref;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-2.5 text-slate-500 whitespace-nowrap">${r.date || '-'}</td>
+          <td class="p-2.5 font-semibold text-slate-700 max-w-[150px] truncate" title="${r.plant}">${r.plant || '-'}</td>
+          <td class="p-2.5 font-bold text-blue-800">${r.line || '-'}</td>
+          <td class="p-2.5">${r.role || '-'}</td>
+          <td class="p-2.5">${r.auditee || '-'}</td>
+          <td class="p-2.5 text-slate-500">${r.auditor || '-'}</td>
+          <td class="p-2.5 text-center">${r.earned || 0}/${r.max || 0}</td>
+          <td class="p-2.5 text-center font-bold ${r.score >= 85 ? 'text-emerald-700' : 'text-rose-600'}">${r.score}%</td>
+          <td class="p-2.5 text-slate-500 max-w-[120px] truncate">${r.remark || '-'}</td>
+          <td class="p-2.5 text-center">
+            <button onclick="deleteAuditRecord('${recordId}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-bold transition flex items-center justify-center space-x-1 mx-auto">
+              <i class="ph-bold ph-trash"></i>
+              <span>हटवा</span>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderCharts(records) {
+      if (typeof Chart === 'undefined') return;
+
+      const plantScores = {};
+      records.forEach(r => {
+        const p = r.plant || 'Other';
+        if (!plantScores[p]) plantScores[p] = [];
+        plantScores[p].push(r.score);
+      });
+      const plantLabels = Object.keys(plantScores).length ? Object.keys(plantScores) : ['Building No ०२'];
+      const plantData = plantLabels.map(p => plantScores[p] ? (plantScores[p].reduce((a,b)=>a+b,0)/plantScores[p].length).toFixed(1) : 0);
+
+      const lineScores = {};
+      records.forEach(r => {
+        const l = r.line || 'Line 1';
+        if (!lineScores[l]) lineScores[l] = [];
+        lineScores[l].push(r.score);
+      });
+      const lineLabels = Object.keys(lineScores).slice(0, 6);
+      const lineData = lineLabels.map(l => (lineScores[l].reduce((a,b)=>a+b,0)/lineScores[l].length).toFixed(1));
+
+      const roleScores = { Operator: [], Inspector: [], SupProduction: [], SupQuality: [] };
+      records.forEach(r => {
+        if (roleScores[r.role]) roleScores[r.role].push(r.score);
+      });
+      const roleLabels = ['ऑपरेटर', 'इन्स्पेक्टर', 'सुप.(प्रोड.)', 'सुप.(क्वा.)'];
+      const roleData = [
+        roleScores.Operator.length ? (roleScores.Operator.reduce((a,b)=>a+b,0)/roleScores.Operator.length).toFixed(1) : 0,
+        roleScores.Inspector.length ? (roleScores.Inspector.reduce((a,b)=>a+b,0)/roleScores.Inspector.length).toFixed(1) : 0,
+        roleScores.SupProduction.length ? (roleScores.SupProduction.reduce((a,b)=>a+b,0)/roleScores.SupProduction.length).toFixed(1) : 0,
+        roleScores.SupQuality.length ? (roleScores.SupQuality.reduce((a,b)=>a+b,0)/roleScores.SupQuality.length).toFixed(1) : 0
+      ];
+
+      const ctxPlant = document.getElementById('chart-plant');
+      if (ctxPlant) {
+        if (chartPlant) chartPlant.destroy();
+        chartPlant = new Chart(ctxPlant, {
+          type: 'bar',
+          data: { labels: plantLabels.map(l => l.length > 15 ? l.slice(0, 15) + '...' : l), datasets: [{ label: 'सरासरी %', data: plantData, backgroundColor: '#3b82f6' }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+        });
+      }
+
+      const ctxLine = document.getElementById('chart-line');
+      if (ctxLine) {
+        if (chartLine) chartLine.destroy();
+        chartLine = new Chart(ctxLine, {
+          type: 'bar',
+          data: { labels: lineLabels.length ? lineLabels : ['No Data'], datasets: [{ label: 'लाईन %', data: lineData.length ? lineData : [0], backgroundColor: '#10b981' }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+        });
+      }
+
+      const ctxRole = document.getElementById('chart-role');
+      if (ctxRole) {
+        if (chartRole) chartRole.destroy();
+        chartRole = new Chart(ctxRole, {
+          type: 'bar',
+          data: { labels: roleLabels, datasets: [{ label: 'पद %', data: roleData, backgroundColor: '#8b5cf6' }] },
+          options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+        });
+      }
+    }
+
+    // --- 12. SHEETJS TWO-SHEET EXCEL EXPORT ---
+    function exportToExcelTwoSheets() {
+      if (typeof XLSX === 'undefined') {
+        alert('SheetJS लायब्ररी लोड झालेली नाही.');
+        return;
+      }
+
+      const records = getAllRecords();
+      if (records.length === 0) {
+        alert('डाऊनलोड करण्यासाठी कोणतीही ऑडिट नोंद उपलब्ध नाही.');
+        return;
+      }
+
+      const map = {};
+      records.forEach(r => {
+        const key = `${r.plant || 'Plant'}__${r.line || 'Line 1'}`;
+        if (!map[key]) {
+          map[key] = { plant: r.plant || 'Plant', line: r.line || 'Line 1', Operator: [], Inspector: [], SupProduction: [], SupQuality: [] };
+        }
+        if (map[key][r.role]) map[key][r.role].push(r.score);
+      });
+
+      const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '-';
+
+      const sheet1Data = [
+        ['JD Compliance Audit - Plant & Line Matrix Summary'],
+        ['Generated Date:', new Date().toLocaleString()],
+        [],
+        ['Plant / Shop', 'Line / Machine', 'Operator Compliance (%)', 'Inspector Compliance (%)', 'Supervisor Prod. (%)', 'Supervisor QA (%)', 'Overall Average (%)', 'Status']
+      ];
+
+      Object.values(map).forEach(r => {
+        const op = avg(r.Operator);
+        const in_ = avg(r.Inspector);
+        const sp = avg(r.SupProduction);
+        const sq = avg(r.SupQuality);
+        const valid = [op, in_, sp, sq].filter(v => v !== '-').map(Number);
+        const overall = valid.length ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1) : '-';
+        const st = overall !== '-' ? (Number(overall) >= 85 ? 'PASSED' : 'NEEDS ACTION') : '-';
+
+        sheet1Data.push([r.plant, r.line, op, in_, sp, sq, overall, st]);
+      });
+
+      const sheet2Data = [
+        ['Date', 'Plant / Shop', 'Line', 'Shift', 'Role', 'Auditee Name', 'Auditor Name', 'Score Earned', 'Max Score', 'Compliance (%)', 'Remarks']
+      ];
+
+      records.forEach(r => {
+        sheet2Data.push([
+          r.date || '',
+          r.plant || '',
+          r.line || '',
+          r.shift || '',
+          r.role || '',
+          r.auditee || '',
+          r.auditor || '',
+          r.earned || 0,
+          r.max || 0,
+          r.score || 0,
+          r.remark || ''
+        ]);
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
+      const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
+
+      XLSX.utils.book_append_sheet(wb, ws1, 'Line Matrix Summary');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Daily Audit Logs');
+
+      XLSX.writeFile(wb, `JD_Audit_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      showToast('Excel फाईल डाऊनलोड झाली!');
+    }
+  </script>
+</body>
+</html>
