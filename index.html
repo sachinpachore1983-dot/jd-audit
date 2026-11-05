@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>JD AuditPro - दैनिक ऑडिट व मॉनिटरिंग</title>
+  <title>JD AuditPro - दैनिक ऑडिट व मॉनिटरिंग सिस्टीम</title>
   
   <meta name="theme-color" content="#1e40af">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -44,7 +44,7 @@
         </div>
         <div>
           <h1 class="text-base font-bold leading-tight">JD AuditPro Mobile</h1>
-          <p id="header-ref-display" class="text-xs text-blue-200">REF: JD-20261026-01</p>
+          <p id="header-ref-display" class="text-xs text-blue-200">REF: JD-20261105-01</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -121,11 +121,11 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">कर्मचारी / ऑपरेटर नाव</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">कर्मचारी / सुपरवायझर नाव (Auditee)</label>
             <input type="text" id="meta-auditee" placeholder="कर्मचाऱ्याचे नाव" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">ऑडिटरचे नाव</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ऑडिटरचे नाव (Auditor Name)</label>
             <input type="text" id="meta-auditor" placeholder="तुमचे नाव" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
           </div>
           <div class="sm:col-span-3">
@@ -172,7 +172,7 @@
 
       <!-- Checklist Cards Container -->
       <section id="checklist-cards-container" class="space-y-3">
-        <!-- Rendered by JavaScript -->
+        <!-- Rendered dynamically -->
       </section>
 
       <!-- Signatures Card -->
@@ -220,14 +220,14 @@
       </section>
     </div>
 
-    <!-- VIEW 2: MONTHLY SUMMARY & GRAPHS -->
+    <!-- VIEW 2: MONTHLY SUMMARY, ROLE/SUPERVISOR BREAKDOWN & GRAPHS -->
     <div id="view-monthly-summary" class="hidden space-y-4">
       
       <!-- Filter Bar -->
       <section class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-4 gap-2 text-sm">
         <div>
           <label class="block text-xs font-semibold text-slate-500 mb-1">महिना निवडा</label>
-          <input type="month" id="filter-month" value="2026-10" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+          <input type="month" id="filter-month" value="2026-11" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-500 mb-1">प्लॅन्ट निवडा</label>
@@ -262,7 +262,62 @@
         </div>
       </section>
 
-      <!-- Graphical Analytics Charts -->
+      <!-- 1. ROLE-WISE SUMMARY TABLE -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+          <h3 class="text-sm font-bold text-blue-900 flex items-center space-x-2">
+            <i class="ph-bold ph-identification-badge text-blue-700 text-base"></i>
+            <span>१. मुख्य पदानुसार ऑडिट सारांश (Role-Wise Audit Summary)</span>
+          </h3>
+          <span class="text-xs bg-blue-200 text-blue-900 font-bold px-2.5 py-0.5 rounded-full">Operator / Inspector / Supervisors</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 uppercase font-bold border-b">
+              <tr>
+                <th class="p-3">तपासणीचे पद (Role)</th>
+                <th class="p-3 text-center">एकूण ऑडिट संख्या</th>
+                <th class="p-3 text-center">मिळालेले / कमाल गुण</th>
+                <th class="p-3 text-center">सरासरी कंप्लायन्स %</th>
+                <th class="p-3 text-center">सद्यस्थिती (Status)</th>
+              </tr>
+            </thead>
+            <tbody id="role-summary-tbody" class="divide-y divide-slate-200 font-medium">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2. SUPERVISOR & PERSON-WISE SUMMARY TABLE -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+          <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+            <i class="ph-bold ph-users text-blue-700 text-base"></i>
+            <span>२. सुपरवायझर व कर्मचारी नावानिशी कामगिरी (Supervisor & Auditee Breakdown)</span>
+          </h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-600 uppercase font-bold border-b">
+              <tr>
+                <th class="p-2.5">सुपरवायझर / कर्मचारी नाव</th>
+                <th class="p-2.5">तपासणीचे पद (Role)</th>
+                <th class="p-2.5">प्लॅन्ट / शॉप</th>
+                <th class="p-2.5">मशिन / लाईन</th>
+                <th class="p-2.5 text-center">ऑडिट संख्या</th>
+                <th class="p-2.5 text-center">सरासरी कंप्लायन्स %</th>
+                <th class="p-2.5 text-center">सद्यस्थिती (Status)</th>
+              </tr>
+            </thead>
+            <tbody id="person-summary-tbody" class="divide-y divide-slate-200 font-medium">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. GRAPHICAL ANALYTICS CHARTS -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <!-- Plant-wise Chart -->
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
@@ -296,12 +351,12 @@
         </div>
       </div>
 
-      <!-- Line-wise Matrix Summary Table -->
+      <!-- 4. LINE-WISE MATRIX SUMMARY TABLE -->
       <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
           <h3 class="text-sm font-bold text-slate-800 flex items-center space-x-1.5">
             <i class="ph-bold ph-table text-blue-700"></i>
-            <span>मशिननिहाय व भूमिकानिहाय सारांश मॅट्रिक्स (Line Matrix)</span>
+            <span>३. मशिननिहाय व भूमिकानिहाय सारांश मॅट्रिक्स (Line Matrix)</span>
           </h3>
           <span class="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded-full" id="total-cloud-records-count">० नोंदी उपलब्ध</span>
         </div>
@@ -326,10 +381,10 @@
         </div>
       </section>
 
-      <!-- Cloud History Table with Action Delete Button -->
+      <!-- 5. DETAILED AUDIT LOGS TABLE (WITH DELETE OPTION) -->
       <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-          <h3 class="text-sm font-bold text-slate-800">सर्व ताज्या दैनिक ऑडिट नोंदी</h3>
+          <h3 class="text-sm font-bold text-slate-800">४. सर्व ताज्या दैनिक ऑडिट नोंदी (Detailed Log)</h3>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
@@ -339,7 +394,7 @@
                 <th class="p-2.5">प्लॅन्ट</th>
                 <th class="p-2.5">मशिन</th>
                 <th class="p-2.5">पद</th>
-                <th class="p-2.5">कर्मचारी</th>
+                <th class="p-2.5">कर्मचारी / सुपरवायझर</th>
                 <th class="p-2.5">ऑडिटर</th>
                 <th class="p-2.5 text-center">गुण</th>
                 <th class="p-2.5 text-center">टक्केवारी</th>
@@ -348,11 +403,41 @@
               </tr>
             </thead>
             <tbody id="history-logs-tbody" class="divide-y divide-slate-200 font-medium">
-              <!-- Populated by Real Cloud Sync -->
+              <!-- Populated by Cloud Sync -->
             </tbody>
           </table>
         </div>
       </section>
+
+      <!-- 6. NC & CAPA TRACKER TABLE -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
+          <h3 class="text-sm font-bold text-rose-900 flex items-center space-x-2">
+            <i class="ph-bold ph-warning-circle text-rose-700 text-base"></i>
+            <span>५. दोष निवारण व सुधारात्मक कृती ट्रॅकर (NC & CAPA Action Tracker)</span>
+          </h3>
+          <span class="text-xs bg-rose-200 text-rose-900 font-bold px-2 py-0.5 rounded-full">Score &lt; 85% किंवा NC शेरा</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 uppercase font-bold border-b">
+              <tr>
+                <th class="p-2.5">Ref ID</th>
+                <th class="p-2.5">प्लॅन्ट व लाईन</th>
+                <th class="p-2.5">पद</th>
+                <th class="p-2.5">जबाबदार व्यक्ती</th>
+                <th class="p-2.5">आढळलेली त्रुटी / NC शेरा</th>
+                <th class="p-2.5 text-center">स्कोअर</th>
+                <th class="p-2.5 text-center">सद्यस्थिती</th>
+              </tr>
+            </thead>
+            <tbody id="capa-tracker-tbody" class="divide-y divide-slate-200 font-medium">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
 
   </main>
@@ -472,7 +557,7 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    // --- 1. FIREBASE CONFIGURATION (YOUR REAL PROJECT: jd-audit-pro-mmpl) ---
+    // --- 1. FIREBASE CONFIGURATION (PROJECT: jd-audit-pro-mmpl) ---
     const firebaseConfig = {
       apiKey: "AIzaSyADdWPJFZY3m1Rlz2T52GSJTw5zKD_Ql-E",
       authDomain: "jd-audit-pro-mmpl.firebaseapp.com",
@@ -565,7 +650,7 @@
     // --- 3. GLOBAL APPLICATION STATE ---
     let appState = {
       meta: {
-        ref: 'JD-20261026-01',
+        ref: 'JD-20261105-01',
         plant: 'Building No ०२ (VW / TML / JLR ) शॉप',
         line: 'HT 382',
         shift: 'Shift I',
@@ -826,7 +911,7 @@
 
           <!-- Remark and Camera Input -->
           <div class="flex items-center space-x-2 pt-1 text-xs">
-            <input type="text" placeholder="काही शेरा / सुधारात्मक कृती..." value="${currentRemark}" onchange="setRemark('${item.id}', this.value)" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
+            <input type="text" placeholder="काही शेरा / सुधारात्मक कृती (NC)..." value="${currentRemark}" onchange="setRemark('${item.id}', this.value)" class="flex-1 bg-slate-50 border border-slate-300 rounded-lg p-2 font-medium">
             <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg flex items-center space-x-1 font-semibold flex-shrink-0">
               <i class="ph-bold ph-camera"></i>
               <span>${currentPhoto ? 'फोटो OK' : 'फोटो'}</span>
@@ -976,7 +1061,6 @@
         });
       }
 
-      // Filter Plant Change in Summary
       const filterPlant = document.getElementById('filter-plant');
       if (filterPlant) {
         filterPlant.addEventListener('change', () => refreshAnalyticsAndMatrix());
@@ -1015,6 +1099,17 @@
         return;
       }
 
+      // Collect specific NC remarks
+      let ncRemarksList = [];
+      const items = CHECKLIST_DATABASE[appState.currentRole] || [];
+      items.forEach(it => {
+        const sc = appState.scores[it.id];
+        if ((sc === 0 || sc === 1) && appState.remarks[it.id]) {
+          ncRemarksList.push(appState.remarks[it.id]);
+        }
+      });
+      const finalRemark = ncRemarksList.length > 0 ? ncRemarksList.join('; ') : 'All parameters checked OK';
+
       const auditRecord = {
         ref: appState.meta.ref,
         date: appState.meta.date,
@@ -1029,6 +1124,7 @@
         max: maxPossible,
         scores: appState.scores,
         remarks: appState.remarks,
+        remark: finalRemark,
         timestamp: new Date().toISOString()
       };
 
@@ -1056,7 +1152,7 @@
     }
 
     window.deleteAuditRecord = async function(id) {
-      if (!confirm("तुम्हाला खात्री आहे का? हा ऑडिट रिपोर्ट कायमस्वरूपी डिलीट करायचा आहे?")) {
+      if (!confirm("तुम्हाला खात्री आहे का? हा ऑडिट रिपोर्ट कायमस्वरूपी हटवायचा आहे?")) {
         return;
       }
 
@@ -1073,17 +1169,17 @@
 
         appState.cloudAudits = appState.cloudAudits.filter(r => r.id !== id && r.ref !== id);
 
-        showToast("रिपोर्ट डिलीट झाला!");
+        showToast("रिपोर्ट यशस्वी हटवला!");
         refreshAnalyticsAndMatrix();
       } catch (err) {
         console.error("Delete error:", err);
-        showToast("डिलीट करताना अडचण आली.");
+        showToast("हटवताना अडचण आली.");
       }
     };
 
     function listenToFirebaseCloud() {
       if (isFirebaseOnline && db) {
-        db.collection('daily_audits').orderBy('timestamp', 'desc').limit(150)
+        db.collection('daily_audits').orderBy('timestamp', 'desc').limit(200)
           .onSnapshot(snapshot => {
             let list = [];
             snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
@@ -1125,7 +1221,7 @@
 • लाईन / मशिन: ${appState.meta.line}
 • शिफ्ट: ${appState.meta.shift}
 • तपासणीचे पद: ${appState.currentRole}
-• कर्मचारी (Auditee): ${appState.meta.auditee || 'N/A'}
+• कर्मचारी / सुपरवायझर (Auditee): ${appState.meta.auditee || 'N/A'}
 • ऑडिटरचे नाव: ${appState.meta.auditor || 'N/A'}
 • दिनांक: ${appState.meta.date}
 
@@ -1161,7 +1257,7 @@ JD AuditPro Mobile System`;
       }
     }
 
-    // --- 11. GRAPHICAL ANALYTICS & MATRIX ---
+    // --- 11. GRAPHICAL ANALYTICS, ROLE & PERSON TABLES & CAPA ---
     let chartPlant = null;
     let chartLine = null;
     let chartRole = null;
@@ -1182,11 +1278,112 @@ JD AuditPro Mobile System`;
       const countEl = document.getElementById('total-cloud-records-count');
       if (countEl) countEl.textContent = `${records.length} नोंदी उपलब्ध`;
 
+      renderRoleSummaryTable(records);
+      renderPersonSummaryTable(records);
       renderSummaryMatrix(records);
       renderHistoryTable(records);
+      renderCapaTracker(records);
       renderCharts(records);
     }
 
+    // 1. Role-Wise Summary Table
+    function renderRoleSummaryTable(records) {
+      const tbody = document.getElementById('role-summary-tbody');
+      if (!tbody) return;
+
+      const roles = [
+        { key: 'Operator', label: 'ऑपरेटर (Operator)', icon: 'ph-user' },
+        { key: 'Inspector', label: 'इन्स्पेक्टर (Quality Inspector)', icon: 'ph-magnifying-glass' },
+        { key: 'SupProduction', label: 'सुपरवायझर - प्रोडक्शन (Production Supervisor)', icon: 'ph-gear' },
+        { key: 'SupQuality', label: 'सुपरवायझर - क्वालिटी (Quality Supervisor)', icon: 'ph-check-circle' }
+      ];
+
+      tbody.innerHTML = '';
+
+      roles.forEach(roleObj => {
+        const matching = records.filter(r => r.role === roleObj.key);
+        const count = matching.length;
+        const totalEarned = matching.reduce((sum, r) => sum + (Number(r.earned) || 0), 0);
+        const totalMax = matching.reduce((sum, r) => sum + (Number(r.max) || 0), 0);
+        
+        let avgPct = 0;
+        if (matching.length > 0) {
+          const sumPct = matching.reduce((sum, r) => sum + (Number(r.score) || 0), 0);
+          avgPct = (sumPct / matching.length).toFixed(1);
+        }
+
+        const isPassed = count > 0 && Number(avgPct) >= 85;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b";
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-slate-800 flex items-center space-x-2">
+            <i class="ph-bold ${roleObj.icon} text-blue-700 text-sm"></i>
+            <span>${roleObj.label}</span>
+          </td>
+          <td class="p-3 text-center font-bold text-slate-700">${count}</td>
+          <td class="p-3 text-center text-slate-600">${count > 0 ? totalEarned + ' / ' + totalMax : '-'}</td>
+          <td class="p-3 text-center font-black ${count > 0 ? (isPassed ? 'text-emerald-700 text-sm' : 'text-rose-600 text-sm') : 'text-slate-400'}">
+            ${count > 0 ? avgPct + '%' : '-'}
+          </td>
+          <td class="p-3 text-center">
+            ${count > 0 
+              ? (isPassed 
+                  ? '<span class="px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">PASSED (समाधानकारक)</span>' 
+                  : '<span class="px-2.5 py-1 rounded bg-rose-100 text-rose-800 text-[11px] font-bold">ACTION REQUIRED (सुधारणा आवश्यक)</span>') 
+              : '<span class="text-slate-400 text-xs">ऑडिट नाही</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 2. Supervisor & Person-wise Breakdown Table
+    function renderPersonSummaryTable(records) {
+      const tbody = document.getElementById('person-summary-tbody');
+      if (!tbody) return;
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">अद्याप कोणतीही ऑडिट नोंद उपलब्ध नाही.</td></tr>`;
+        return;
+      }
+
+      const personMap = {};
+      records.forEach(r => {
+        const name = r.auditee || 'अज्ञात';
+        const key = `${name}__${r.role}`;
+        if (!personMap[key]) {
+          personMap[key] = { name: name, role: r.role, plant: r.plant, line: r.line, scores: [] };
+        }
+        personMap[key].scores.push(Number(r.score) || 0);
+      });
+
+      tbody.innerHTML = '';
+      Object.values(personMap).forEach(p => {
+        const count = p.scores.length;
+        const avg = (p.scores.reduce((a, b) => a + b, 0) / count).toFixed(1);
+        const isPassed = Number(avg) >= 85;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b";
+        tr.innerHTML = `
+          <td class="p-2.5 font-bold text-slate-800">${p.name}</td>
+          <td class="p-2.5 text-slate-600">${p.role}</td>
+          <td class="p-2.5 text-slate-600 truncate max-w-[150px]">${p.plant}</td>
+          <td class="p-2.5 font-semibold text-blue-700">${p.line}</td>
+          <td class="p-2.5 text-center font-bold">${count}</td>
+          <td class="p-2.5 text-center font-black ${isPassed ? 'text-emerald-700' : 'text-rose-600'}">${avg}%</td>
+          <td class="p-2.5 text-center">
+            ${isPassed 
+              ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">PASSED</span>' 
+              : '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">ACTION</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 3. Plant & Line Matrix Summary Table
     function renderSummaryMatrix(records) {
       const tbody = document.getElementById('summary-matrix-tbody');
       if (!tbody) return;
@@ -1237,6 +1434,7 @@ JD AuditPro Mobile System`;
       });
     }
 
+    // 4. Detailed History Table
     function renderHistoryTable(records) {
       const tbody = document.getElementById('history-logs-tbody');
       if (!tbody) return;
@@ -1253,19 +1451,50 @@ JD AuditPro Mobile System`;
         tr.className = "hover:bg-slate-50";
         tr.innerHTML = `
           <td class="p-2.5 text-slate-500 whitespace-nowrap">${r.date || '-'}</td>
-          <td class="p-2.5 font-semibold text-slate-700 max-w-[150px] truncate" title="${r.plant}">${r.plant || '-'}</td>
+          <td class="p-2.5 font-semibold text-slate-700 max-w-[140px] truncate" title="${r.plant}">${r.plant || '-'}</td>
           <td class="p-2.5 font-bold text-blue-800">${r.line || '-'}</td>
-          <td class="p-2.5">${r.role || '-'}</td>
+          <td class="p-2.5 font-semibold text-slate-800">${r.role || '-'}</td>
           <td class="p-2.5">${r.auditee || '-'}</td>
           <td class="p-2.5 text-slate-500">${r.auditor || '-'}</td>
           <td class="p-2.5 text-center">${r.earned || 0}/${r.max || 0}</td>
           <td class="p-2.5 text-center font-bold ${r.score >= 85 ? 'text-emerald-700' : 'text-rose-600'}">${r.score}%</td>
-          <td class="p-2.5 text-slate-500 max-w-[120px] truncate">${r.remark || '-'}</td>
+          <td class="p-2.5 text-slate-500 max-w-[140px] truncate" title="${r.remark || ''}">${r.remark || '-'}</td>
           <td class="p-2.5 text-center">
             <button onclick="deleteAuditRecord('${recordId}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-bold transition flex items-center justify-center space-x-1 mx-auto">
               <i class="ph-bold ph-trash"></i>
               <span>हटवा</span>
             </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 5. NC & CAPA Action Tracker
+    function renderCapaTracker(records) {
+      const tbody = document.getElementById('capa-tracker-tbody');
+      if (!tbody) return;
+
+      const ncRecords = records.filter(r => Number(r.score) < 85 || (r.remark && r.remark !== 'All parameters checked OK' && r.remark !== '-'));
+
+      if (ncRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">कोणतीही प्रलंबित त्रुटी (NC) नाही. सर्व प्रक्रिया मानकांनुसार पूर्ण आहेत.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      ncRecords.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b";
+        tr.innerHTML = `
+          <td class="p-2.5 font-mono text-slate-600 font-bold">${r.ref || r.id || '-'}</td>
+          <td class="p-2.5 font-semibold text-slate-800">${r.plant} (${r.line})</td>
+          <td class="p-2.5 text-slate-600">${r.role}</td>
+          <td class="p-2.5 font-bold text-slate-700">${r.auditee || 'Supervisor'}</td>
+          <td class="p-2.5 text-rose-700 font-medium">${r.remark || 'Parameter out of tolerance / Documentation incomplete'}</td>
+          <td class="p-2.5 text-center font-black text-rose-600">${r.score}%</td>
+          <td class="p-2.5 text-center">
+            <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">CAPA OPEN</span>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1336,7 +1565,7 @@ JD AuditPro Mobile System`;
       }
     }
 
-    // --- 12. SHEETJS TWO-SHEET EXCEL EXPORT ---
+    // --- 12. ADVANCED TWO-SHEET EXCEL EXPORT (EXECUTIVE & PERSON-WISE SUMMARY) ---
     function exportToExcelTwoSheets() {
       if (typeof XLSX === 'undefined') {
         alert('SheetJS लायब्ररी लोड झालेली नाही.');
@@ -1349,42 +1578,89 @@ JD AuditPro Mobile System`;
         return;
       }
 
-      const map = {};
-      records.forEach(r => {
-        const key = `${r.plant || 'Plant'}__${r.line || 'Line 1'}`;
-        if (!map[key]) {
-          map[key] = { plant: r.plant || 'Plant', line: r.line || 'Line 1', Operator: [], Inspector: [], SupProduction: [], SupQuality: [] };
-        }
-        if (map[key][r.role]) map[key][r.role].push(r.score);
-      });
-
-      const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '-';
-
-      const sheet1Data = [
-        ['JD Compliance Audit - Plant & Line Matrix Summary'],
-        ['Generated Date:', new Date().toLocaleString()],
-        [],
-        ['Plant / Shop', 'Line / Machine', 'Operator Compliance (%)', 'Inspector Compliance (%)', 'Supervisor Prod. (%)', 'Supervisor QA (%)', 'Overall Average (%)', 'Status']
+      // 1. Role-Wise Summary Data
+      const roles = [
+        { key: 'Operator', label: 'ऑपरेटर (Operator)' },
+        { key: 'Inspector', label: 'क्वालिटी इन्स्पेक्टर (Quality Inspector)' },
+        { key: 'SupProduction', label: 'प्रोडक्शन सुपरवायझर (Production Supervisor)' },
+        { key: 'SupQuality', label: 'क्वालिटी सुपरवायझर (Quality Supervisor)' }
       ];
 
-      Object.values(map).forEach(r => {
-        const op = avg(r.Operator);
-        const in_ = avg(r.Inspector);
-        const sp = avg(r.SupProduction);
-        const sq = avg(r.SupQuality);
+      const sheet1Data = [
+        ['JD COMPLIANCE AUDIT - EXECUTIVE & SUPERVISOR-WISE REPORT'],
+        ['कंपनी:', 'Mahabal Metals Pvt. Ltd.', 'दिनांक:', new Date().toLocaleString()],
+        [],
+        ['१. पदानुसार सारांश (ROLE-WISE PERFORMANCE SUMMARY)'],
+        ['तपासणीचे पद (Role)', 'एकूण ऑडिट संख्या', 'मिळालेले गुण', 'कमाल गुण', 'सरासरी कंप्लायन्स (%)', 'सद्यस्थिती (Status)']
+      ];
+
+      roles.forEach(r => {
+        const matching = records.filter(rec => rec.role === r.key);
+        const count = matching.length;
+        const earned = matching.reduce((sum, rec) => sum + (Number(rec.earned) || 0), 0);
+        const max = matching.reduce((sum, rec) => sum + (Number(rec.max) || 0), 0);
+        const avg = count > 0 ? (matching.reduce((sum, rec) => sum + (Number(rec.score) || 0), 0) / count).toFixed(1) : 0;
+        const status = count > 0 ? (Number(avg) >= 85 ? 'PASSED' : 'ACTION REQUIRED') : 'NO AUDIT';
+        sheet1Data.push([r.label, count, earned, max, count > 0 ? avg + '%' : '-', status]);
+      });
+
+      // 2. Supervisor / Auditee Breakdown Data
+      sheet1Data.push([]);
+      sheet1Data.push(['२. सुपरवायझर व कर्मचारी नावानिशी कामगिरी (SUPERVISOR & AUDITEE BREAKDOWN)']);
+      sheet1Data.push(['सुपरवायझर / कर्मचारी नाव', 'तपासणीचे पद (Role)', 'प्लॅन्ट / शॉप', 'मशिन / लाईन', 'ऑडिट संख्या', 'सरासरी कंप्लायन्स (%)', 'सद्यस्थिती']);
+
+      const personMap = {};
+      records.forEach(r => {
+        const name = r.auditee || 'अज्ञात';
+        const key = `${name}__${r.role}`;
+        if (!personMap[key]) {
+          personMap[key] = { name: name, role: r.role, plant: r.plant, line: r.line, scores: [] };
+        }
+        personMap[key].scores.push(Number(r.score) || 0);
+      });
+
+      Object.values(personMap).forEach(p => {
+        const count = p.scores.length;
+        const avg = (p.scores.reduce((a, b) => a + b, 0) / count).toFixed(1);
+        const status = Number(avg) >= 85 ? 'PASSED' : 'ACTION REQUIRED';
+        sheet1Data.push([p.name, p.role, p.plant, p.line, count, avg + '%', status]);
+      });
+
+      // 3. Plant & Line Matrix Summary
+      sheet1Data.push([]);
+      sheet1Data.push(['३. प्लांट व मशिननिहाय मॅट्रिक्स (PLANT & LINE MATRIX)']);
+      sheet1Data.push(['Plant / Shop', 'Line / Machine', 'Operator (%)', 'Inspector (%)', 'Sup. Prod. (%)', 'Sup. QA (%)', 'Overall Average (%)', 'Status']);
+
+      const lineMap = {};
+      records.forEach(r => {
+        const key = `${r.plant || 'Plant'}__${r.line || 'Line 1'}`;
+        if (!lineMap[key]) {
+          lineMap[key] = { plant: r.plant || 'Plant', line: r.line || 'Line 1', Operator: [], Inspector: [], SupProduction: [], SupQuality: [] };
+        }
+        if (lineMap[key][r.role]) lineMap[key][r.role].push(Number(r.score) || 0);
+      });
+
+      const avgFn = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : '-';
+
+      Object.values(lineMap).forEach(r => {
+        const op = avgFn(r.Operator);
+        const in_ = avgFn(r.Inspector);
+        const sp = avgFn(r.SupProduction);
+        const sq = avgFn(r.SupQuality);
         const valid = [op, in_, sp, sq].filter(v => v !== '-').map(Number);
         const overall = valid.length ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1) : '-';
         const st = overall !== '-' ? (Number(overall) >= 85 ? 'PASSED' : 'NEEDS ACTION') : '-';
-
         sheet1Data.push([r.plant, r.line, op, in_, sp, sq, overall, st]);
       });
 
+      // 4. Sheet 2: All Detailed Daily Logs
       const sheet2Data = [
-        ['Date', 'Plant / Shop', 'Line', 'Shift', 'Role', 'Auditee Name', 'Auditor Name', 'Score Earned', 'Max Score', 'Compliance (%)', 'Remarks']
+        ['Ref ID', 'दिनांक', 'प्लॅन्ट / शॉप', 'मशिन', 'शिफ्ट', 'पद (Role)', 'कर्मचारी / सुपरवायझर नाव', 'ऑडिटरचे नाव', 'मिळालेले गुण', 'कमाल गुण', 'टक्केवारी (%)', 'शेरा / सुधारात्मक कृती']
       ];
 
       records.forEach(r => {
         sheet2Data.push([
+          r.ref || r.id || '',
           r.date || '',
           r.plant || '',
           r.line || '',
@@ -1399,15 +1675,16 @@ JD AuditPro Mobile System`;
         ]);
       });
 
+      // Generate Workbook
       const wb = XLSX.utils.book_new();
       const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
       const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
 
-      XLSX.utils.book_append_sheet(wb, ws1, 'Line Matrix Summary');
+      XLSX.utils.book_append_sheet(wb, ws1, 'Summary & Person Matrix');
       XLSX.utils.book_append_sheet(wb, ws2, 'Daily Audit Logs');
 
       XLSX.writeFile(wb, `JD_Audit_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-      showToast('Excel फाईल डाऊनलोड झाली!');
+      showToast('एक्सेल अहवाल डाऊनलोड झाला!');
     }
   </script>
 </body>
