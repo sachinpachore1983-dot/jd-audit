@@ -44,7 +44,7 @@
         </div>
         <div>
           <h1 class="text-base font-bold leading-tight">JD AuditPro Mobile</h1>
-          <p id="header-ref-display" class="text-xs text-blue-200">REF: JD-20261105-01</p>
+          <p id="header-ref-display" class="text-xs text-blue-200">REF: JD-20261106-01</p>
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -71,6 +71,15 @@
       </button>
     </div>
   </header>
+
+  <!-- Edit Mode Banner (Hidden by default) -->
+  <div id="edit-mode-alert" class="hidden bg-amber-500 text-white px-4 py-2 text-xs font-bold text-center flex items-center justify-between shadow">
+    <span class="flex items-center space-x-1">
+      <i class="ph-bold ph-warning"></i>
+      <span>तुम्ही जुना अहवाल संपादन (Edit) करत आहात. बदल झाल्यावर 'अपडेट सेव्ह करा' वर क्लिक करा.</span>
+    </span>
+    <button onclick="cancelEditMode()" class="bg-amber-700 px-2 py-0.5 rounded text-[11px] font-bold">रद्द करा</button>
+  </div>
 
   <!-- Main View Container -->
   <main class="max-w-4xl mx-auto p-4 space-y-4">
@@ -203,7 +212,7 @@
       <section class="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button id="btn-save-cloud" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow flex items-center justify-center space-x-1.5 transition">
           <i class="ph-bold ph-cloud-arrow-up text-lg"></i>
-          <span>क्लाउडवर सेव्ह करा</span>
+          <span id="save-btn-text">क्लाउडवर सेव्ह करा</span>
         </button>
         <button id="btn-open-email-modal" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow flex items-center justify-center space-x-1.5 transition">
           <i class="ph-bold ph-envelope-simple text-lg"></i>
@@ -294,7 +303,7 @@
 
           <button id="btn-download-excel" class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center space-x-1.5 shadow transition">
             <i class="ph-bold ph-file-xls text-base"></i>
-            <span>निवडीनुसार Excel डाऊनलोड करा (Filtered Excel)</span>
+            <span>तपशीलवार Excel डाऊनलोड (Detailed Report)</span>
           </button>
         </div>
       </section>
@@ -417,10 +426,10 @@
         </div>
       </section>
 
-      <!-- 5. DETAILED AUDIT LOGS TABLE (WITH DELETE OPTION) -->
+      <!-- 5. DETAILED AUDIT LOGS TABLE (WITH EDIT & DELETE) -->
       <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-          <h3 class="text-sm font-bold text-slate-800">४. दैनिक तपशीलवार नोंदी (Filtered Audit Logs)</h3>
+          <h3 class="text-sm font-bold text-slate-800">४. दैनिक तपशीलवार नोंदी (Edit & Action)</h3>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
@@ -435,7 +444,7 @@
                 <th class="p-2.5 text-center">गुण</th>
                 <th class="p-2.5 text-center">टक्केवारी</th>
                 <th class="p-2.5">शेरा</th>
-                <th class="p-2.5 text-center">क्रिया</th>
+                <th class="p-2.5 text-center">क्रिया (Actions)</th>
               </tr>
             </thead>
             <tbody id="history-logs-tbody" class="divide-y divide-slate-200 font-medium">
@@ -608,6 +617,9 @@
     let auth = null;
     let isFirebaseOnline = false;
 
+    // Master Passcode for Editing Existing Approved Audits
+    const MANAGER_APPROVAL_PIN = "MMPL@2026";
+
     try {
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
@@ -676,7 +688,7 @@
         { id: 'sq_7', text: 'जर एखादा जॉब क्रिटिकल (SC / CC / Major इत्यादी ) पॅरामीटर साठी रिजेक्ट झाला किंवा दररोजच्या लिमिट पेक्षा जास्त रिजेक्शन ट्रेंड आढळल्यास प्रॊडक्टशन बंद करण्यास सांगून, तात्पुरती कृती (Containment action) अंमलबजावणी करूनच प्रॊडक्टशन सुरु करावे.\nआढळलेला प्रॉब्लेम क्वालिटी मॅनेजरला सांगावा व त्यांनी सांगितल्या प्रमाणे कायमस्वरूपी कृती (Permenant action) अंमलबजावणी करावी.', freq: 'प्रत्येक शिफ्टला', rec: 'रिजेक्शन रिपोर्ट / 8D रिपोर्ट' },
         { id: 'sq_8', text: 'इन्स्पेक्टर किंवा ऑपरेटर यांची प्रोडक्ट क्वालिटी, गेजस किंवा मेझरिंग इक्विपमेंट्स इत्यादी बद्दल काही तक्रार असेल तर त्याचे निवारण करणे.\nगेजस किंवा मेझरिंग इक्विपमेंट्स कॅलिब्रेशन प्लॅन प्रमाणे, स्टॅण्डर्ड रूमला कॅलिब्रेशन साठी दयावित.', freq: 'प्रत्येक शिफ्टला', rec: 'कॅलिब्रेशन प्लॅन' },
         { id: 'sq_9', text: 'शिफ्ट संपल्या नंतर इन्स्पेक्टर ने इन्स्पेक्शन टेबल स्वच्छ केले आहे का ते पाहणे व केले नसल्यास करून घ्यावे. वापरलेले गेजस किंवा मेझरिंग इक्विपमेंट्स, रेपोर्टच्या फाइल्स ठरवलेल्या ठिकाणी ठेवली आहेत का ते पहाणे नसल्यास ठेवण्यास सांगावे. इनप्रोसेस / फिनिश / इनकमिंग / रिजेक्ट / होल्ड इत्यादी जॉबला आयडेंटिफिकेशन टॅग लावले आहे का ते पहाणे व नसल्यास लावण्यास सांगावे.', freq: 'प्रत्येक शिफ्टला', rec: '----' },
-        { id: 'sq_10', text: '4 M चेंज मॅनेजमेंट रुल प्रमाणे, ज्यावेळी ऐखादा 4 M चेंज मॅनेजमेंट होइल त्यावेळी त्या चेंज संबंधित ज्या सूचना दिल्या आहेत त्या अंमलात आणुन, संबंधित डॉक्युमेंट अपडेट करावे.', freq: 'गरज लागेल तेंव्हा', rec: '4M रेकॉर्ड शिट / संबंधित डॉक्युमेंट' },
+        { id: 'sq_10', text: '4 M चेंज मॅनेजमेंट रुल प्रमाणे, ज्यावेळी ऐखादा 4 M चेंज मॅनेजमेंट होइल त्यावेळी त्या चेंज संबंधित ज्या सूचना दिल्या आहेत त्या अंमलात आणुन, संबंधित डॉक्युमेंट अपडेट करावे.', freq: 'गरज लागेल तेंव्हा', rec: '4M record sheet / relevant document' },
         { id: 'sq_11', text: 'कस्टमर कंप्लेंट / इन हाऊस कंप्लेंट / सप्लायर कंप्लेंट या वर ठरवलेली ॲक्शन अमलात आणने व त्याची सस्टेनन्स चेक करणे.\nजर काही तक्रार असेल तर क्वालिटी मॅनेजरला रिपोर्ट करणे.', freq: 'प्रत्येक शिफ्टला', rec: 'रिजेक्शन रिपोर्ट / 8D रिपोर्ट' },
         { id: 'sq_12', text: 'जर रिवर्कला परवानगी दिली असेल तर रिवर्क वर्क इन्स्ट्रक्शन्स प्रमाणे ठरवून दिलेल्या प्रॊडक्टशन ऑपरेटर / सुपरवायझर कडून रिवर्क करून घ्यावे.\nरिवर्ककेल्या नंतर ठरवून दिलेल्या रिवर्क इन्स्पेक्टर कडून जॉब चेक करून, ओके जॉब आयडेंटिफिकेशन करून डिस्पॅच करावा', freq: 'प्रत्येक शिफ्टला', rec: 'रिवर्क इन्स्पेक्शन रिपोर्ट' },
         { id: 'sq_13', text: 'डिस्पॅच डिपार्टमेंट कडून आलेल्या प्लॅन प्रमाणे जॉब चेक करून ओके जॉब डिस्पॅच करणे.', freq: 'प्रत्येक शिफ्टला', rec: 'डिस्पॅच प्लॅन' }
@@ -686,7 +698,7 @@
     // --- 3. GLOBAL APPLICATION STATE ---
     let appState = {
       meta: {
-        ref: 'JD-20261105-01',
+        ref: 'JD-20261106-01',
         plant: 'Building No ०२ (VW / TML / JLR ) शॉप',
         line: 'HT 382',
         shift: 'Shift I',
@@ -698,6 +710,7 @@
       scores: {}, 
       remarks: {}, 
       photos: {}, 
+      editingRecordId: null, // Track currently edited record
       plantEmails: {
         'Building No ०२ (VW / TML / JLR ) शॉप': 'b2.qa@company.com',
         'Building No ०३ (Cummins / AL) शॉप': 'b3.qa@company.com',
@@ -1164,14 +1177,84 @@
       appState.scores = {};
       appState.remarks = {};
       appState.photos = {};
+      appState.editingRecordId = null;
       if (padAuditor) padAuditor.clear();
       if (padAuditee) padAuditee.clear();
+      document.getElementById('edit-mode-alert').classList.add('hidden');
+      document.getElementById('save-btn-text').textContent = 'क्लाउडवर सेव्ह करा';
       updateMetaBadges();
       renderChecklistCards();
       showToast('नवीन ऑडिट शीट तयार आहे!');
     }
 
-    // --- 9. CLOUD SYNC & DELETE LOGIC ---
+    window.cancelEditMode = function() {
+      resetCurrentAuditForm();
+      showToast('संपादन रद्द केले.');
+    };
+
+    // --- 9. EDIT AUDIT AFTER APPROVAL ---
+    window.requestEditAudit = function(id) {
+      const pass = prompt("व्यवस्थापक मंजुरी आवश्यक!\nकृपया संपादन (Edit) करण्यासाठी Master Passcode प्रविष्ट करा:");
+      if (!pass) return;
+
+      if (pass.trim() !== MANAGER_APPROVAL_PIN) {
+        alert("अवैध पासवर्ड! अहवाल संपादन करण्याची परवानगी नाकारली गेली.");
+        return;
+      }
+
+      // Locate record
+      const local = JSON.parse(localStorage.getItem('jd_local_audits') || '[]');
+      let all = [...appState.cloudAudits, ...local];
+      const target = all.find(r => (r.id === id || r.ref === id));
+
+      if (!target) {
+        alert("अहवाल सापडला नाही.");
+        return;
+      }
+
+      // Populate into appState
+      appState.editingRecordId = target.id || target.ref;
+      appState.meta.ref = target.ref || 'JD-REVISED';
+      appState.meta.plant = target.plant || 'Building No ०२ (VW / TML / JLR ) शॉप';
+      appState.meta.line = target.line || 'HT 382';
+      appState.meta.shift = target.shift || 'Shift I';
+      appState.meta.auditee = target.auditee || '';
+      appState.meta.auditor = target.auditor || '';
+      appState.meta.date = target.date || new Date().toISOString().split('T')[0];
+      appState.currentRole = target.role || 'Operator';
+      appState.scores = target.scores || {};
+      appState.remarks = target.remarks || {};
+
+      // Update Form DOM
+      document.getElementById('meta-plant').value = appState.meta.plant;
+      document.getElementById('meta-line').value = appState.meta.line;
+      document.getElementById('meta-shift').value = appState.meta.shift;
+      document.getElementById('meta-auditee').value = appState.meta.auditee;
+      document.getElementById('meta-auditor').value = appState.meta.auditor;
+      document.getElementById('meta-date').value = appState.meta.date;
+
+      // Update Role Tab
+      const buttons = document.querySelectorAll('.role-btn');
+      buttons.forEach(b => {
+        b.classList.remove('bg-blue-700', 'text-white', 'border-blue-700', 'shadow-sm');
+        b.classList.add('bg-slate-50', 'text-slate-700', 'border-slate-200');
+        if (b.dataset.role === appState.currentRole) {
+          b.classList.add('bg-blue-700', 'text-white', 'border-blue-700', 'shadow-sm');
+          b.classList.remove('bg-slate-50', 'text-slate-700', 'border-slate-200');
+        }
+      });
+
+      // Switch to Daily Tab
+      document.getElementById('nav-tab-daily').click();
+      document.getElementById('edit-mode-alert').classList.remove('hidden');
+      document.getElementById('save-btn-text').textContent = 'दुरुस्ती अपडेट सेव्ह करा';
+
+      updateMetaBadges();
+      renderChecklistCards();
+      showToast('अहवाल संपादनासाठी उघडला आहे!');
+    };
+
+    // --- 10. CLOUD SYNC & DELETE LOGIC ---
     async function saveAuditToCloud() {
       const { earned, maxPossible, pct } = calculateScore();
       if (maxPossible === 0) {
@@ -1204,22 +1287,34 @@
         scores: appState.scores,
         remarks: appState.remarks,
         remark: finalRemark,
-        timestamp: new Date().toISOString()
+        updatedAt: new Date().toISOString()
       };
 
       if (isFirebaseOnline && db) {
         try {
-          await db.collection('daily_audits').add(auditRecord);
-          showToast('क्लाउडवर यशस्वी सेव्ह झाले!');
+          if (appState.editingRecordId) {
+            // Update existing Firestore record
+            await db.collection('daily_audits').doc(appState.editingRecordId).set(auditRecord, { merge: true });
+            showToast('क्लाउडवर अहवाल यशस्वी अपडेट झाला!');
+          } else {
+            // New record
+            auditRecord.timestamp = new Date().toISOString();
+            await db.collection('daily_audits').add(auditRecord);
+            showToast('क्लाउडवर यशस्वी सेव्ह झाले!');
+          }
         } catch (err) {
           console.error('Firebase save error:', err);
           saveLocally(auditRecord);
-          showToast('ऑफलाईन सेव्ह झाले');
+          showToast('स्थानिक मेमरीमध्ये सेव्ह झाले');
         }
       } else {
         saveLocally(auditRecord);
-        showToast('डेटा स्थानिक मेमरीमध्ये सेव्ह झाला!');
+        showToast('स्थानिक मेमरीमध्ये सेव्ह झाले!');
       }
+
+      document.getElementById('edit-mode-alert').classList.add('hidden');
+      document.getElementById('save-btn-text').textContent = 'क्लाउडवर सेव्ह करा';
+      appState.editingRecordId = null;
 
       updateLineFilterOptions();
       refreshAnalyticsAndMatrix();
@@ -1227,7 +1322,12 @@
 
     function saveLocally(record) {
       let local = JSON.parse(localStorage.getItem('jd_local_audits') || '[]');
-      local.unshift(record);
+      if (appState.editingRecordId) {
+        local = local.map(r => (r.id === appState.editingRecordId || r.ref === appState.editingRecordId) ? { ...r, ...record } : r);
+      } else {
+        record.timestamp = new Date().toISOString();
+        local.unshift(record);
+      }
       localStorage.setItem('jd_local_audits', JSON.stringify(local));
     }
 
@@ -1275,7 +1375,7 @@
       }
     }
 
-    // --- 10. EMAIL AUTO-MAPPING & COMPOSER ---
+    // --- 11. EMAIL AUTO-MAPPING & COMPOSER ---
     function populateEmailModal() {
       const plant = appState.meta.plant;
       const targetEmail = appState.plantEmails[plant] || 'qa@company.com';
@@ -1339,7 +1439,7 @@ JD AuditPro Mobile System`;
       }
     }
 
-    // --- 11. DYNAMIC MULTI-FILTERING DATA LOGIC ---
+    // --- 12. DYNAMIC MULTI-FILTERING DATA LOGIC ---
     let chartPlant = null;
     let chartLine = null;
     let chartRole = null;
@@ -1353,22 +1453,18 @@ JD AuditPro Mobile System`;
       const filterRole = document.getElementById('filter-role');
       const filterMonth = document.getElementById('filter-month');
 
-      // Month Filter
       if (filterMonth && filterMonth.value) {
         all = all.filter(r => (r.date || '').startsWith(filterMonth.value));
       }
 
-      // Plant Filter
       if (filterPlant && filterPlant.value !== 'All') {
         all = all.filter(r => r.plant === filterPlant.value);
       }
 
-      // Machine / Line Filter
       if (filterLine && filterLine.value !== 'All') {
         all = all.filter(r => r.line === filterLine.value);
       }
 
-      // Role Filter
       if (filterRole && filterRole.value !== 'All') {
         all = all.filter(r => r.role === filterRole.value);
       }
@@ -1540,7 +1636,7 @@ JD AuditPro Mobile System`;
       });
     }
 
-    // 4. Detailed History Table (Dynamic)
+    // 4. Detailed History Table (Dynamic with EDIT button)
     function renderHistoryTable(records) {
       const tbody = document.getElementById('history-logs-tbody');
       if (!tbody) return;
@@ -1557,16 +1653,20 @@ JD AuditPro Mobile System`;
         tr.className = "hover:bg-slate-50";
         tr.innerHTML = `
           <td class="p-2.5 text-slate-500 whitespace-nowrap">${r.date || '-'}</td>
-          <td class="p-2.5 font-semibold text-slate-700 max-w-[140px] truncate" title="${r.plant}">${r.plant || '-'}</td>
+          <td class="p-2.5 font-semibold text-slate-700 max-w-[130px] truncate" title="${r.plant}">${r.plant || '-'}</td>
           <td class="p-2.5 font-bold text-blue-800">${r.line || '-'}</td>
           <td class="p-2.5 font-semibold text-slate-800">${r.role || '-'}</td>
           <td class="p-2.5">${r.auditee || '-'}</td>
           <td class="p-2.5 text-slate-500">${r.auditor || '-'}</td>
           <td class="p-2.5 text-center">${r.earned || 0}/${r.max || 0}</td>
           <td class="p-2.5 text-center font-bold ${r.score >= 85 ? 'text-emerald-700' : 'text-rose-600'}">${r.score}%</td>
-          <td class="p-2.5 text-slate-500 max-w-[140px] truncate" title="${r.remark || ''}">${r.remark || '-'}</td>
-          <td class="p-2.5 text-center">
-            <button onclick="deleteAuditRecord('${recordId}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-bold transition flex items-center justify-center space-x-1 mx-auto">
+          <td class="p-2.5 text-slate-500 max-w-[120px] truncate" title="${r.remark || ''}">${r.remark || '-'}</td>
+          <td class="p-2.5 text-center flex items-center justify-center space-x-1">
+            <button onclick="requestEditAudit('${recordId}')" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded text-xs font-bold transition flex items-center space-x-0.5" title="मंजुरीने एडिट करा">
+              <i class="ph-bold ph-pencil-simple"></i>
+              <span>एडिट</span>
+            </button>
+            <button onclick="deleteAuditRecord('${recordId}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-bold transition flex items-center space-x-0.5">
               <i class="ph-bold ph-trash"></i>
               <span>हटवा</span>
             </button>
@@ -1678,14 +1778,13 @@ JD AuditPro Mobile System`;
       }
     }
 
-    // --- 12. ADVANCED FILTER-MATCHED EXCEL EXPORT ---
+    // --- 13. HIGH-DETAIL FILTER-MATCHED EXCEL EXPORT WITH GRAPHS DATA ---
     function exportToExcelTwoSheets() {
       if (typeof XLSX === 'undefined') {
         alert('SheetJS लायब्ररी लोड झालेली नाही.');
         return;
       }
 
-      // STRICTLY GET ONLY FILTERED RECORDS AS PER USER'S CURRENT SELECTION
       const records = getFilteredRecords();
       if (records.length === 0) {
         alert('निवडलेल्या फिल्टर्सनुसार डाऊनलोड करण्यासाठी कोणतीही ऑडिट नोंद उपलब्ध नाही.');
@@ -1697,7 +1796,16 @@ JD AuditPro Mobile System`;
       const chosenRole = document.getElementById('filter-role') ? document.getElementById('filter-role').value : 'All';
       const chosenMonth = document.getElementById('filter-month') ? document.getElementById('filter-month').value : 'All';
 
-      // 1. Role-Wise Summary Data
+      // Sheet 1: Detailed Executive, Role & Graph Datasets
+      const sheet1Data = [
+        ['JD AUDITPRO - तपशीलवार कार्यकारी व सारांश अहवाल (EXECUTIVE SUMMARY & GRAPH DATA)'],
+        ['कंपनी: Mahabal Metals Pvt. Ltd.', 'दिनांक:', new Date().toLocaleString()],
+        ['निवडलेले फिल्टर्स:', `महिना: ${chosenMonth} | प्लॅन्ट: ${chosenPlant} | लाईन: ${chosenLine} | पद: ${chosenRole}`],
+        [],
+        ['१. पदानुसार कामगिरी सारांश (ROLE-WISE AUDIT PERFORMANCE)'],
+        ['तपासणीचे पद (Role)', 'एकूण ऑडिट संख्या', 'मिळालेले गुण', 'कमाल गुण', 'सरासरी कंप्लायन्स (%)', 'सद्यस्थिती (Status)']
+      ];
+
       const roles = [
         { key: 'Operator', label: 'ऑपरेटर (Operator)' },
         { key: 'Inspector', label: 'क्वालिटी इन्स्पेक्टर (Quality Inspector)' },
@@ -1706,15 +1814,6 @@ JD AuditPro Mobile System`;
       ];
 
       const visibleRoles = chosenRole === 'All' ? roles : roles.filter(r => r.key === chosenRole);
-
-      const sheet1Data = [
-        ['JD COMPLIANCE AUDIT - EXECUTIVE FILTERED REPORT'],
-        ['कंपनी:', 'Mahabal Metals Pvt. Ltd.', 'दिनांक:', new Date().toLocaleString()],
-        ['निवडलेले फिल्टर्स:', `महिना: ${chosenMonth} | प्लॅन्ट: ${chosenPlant} | लाईन: ${chosenLine} | पद: ${chosenRole}`],
-        [],
-        ['१. पदानुसार कामगिरी सारांश (ROLE PERFORMANCE SUMMARY)'],
-        ['तपासणीचे पद (Role)', 'एकूण ऑडिट संख्या', 'मिळालेले गुण', 'कमाल गुण', 'सरासरी कंप्लायन्स (%)', 'सद्यस्थिती (Status)']
-      ];
 
       visibleRoles.forEach(r => {
         const matching = records.filter(rec => rec.role === r.key);
@@ -1726,9 +1825,9 @@ JD AuditPro Mobile System`;
         sheet1Data.push([r.label, count, earned, max, count > 0 ? avg + '%' : '-', status]);
       });
 
-      // 2. Supervisor / Auditee Breakdown Data
+      // 2. Supervisor / Auditee Breakdown
       sheet1Data.push([]);
-      sheet1Data.push(['२. सुपरवायझर व कर्मचारी नावानिशी कामगिरी (SUPERVISOR & AUDITEE BREAKDOWN)']);
+      sheet1Data.push(['२. सुपरवायझर व कर्मचारी नावानिशी कामगिरी (SUPERVISOR & AUDITEE PERFORMANCE)']);
       sheet1Data.push(['सुपरवायझर / कर्मचारी नाव', 'तपासणीचे पद (Role)', 'प्लॅन्ट / शॉप', 'मशिन / लाईन', 'ऑडिट संख्या', 'सरासरी कंप्लायन्स (%)', 'सद्यस्थिती']);
 
       const personMap = {};
@@ -1775,7 +1874,23 @@ JD AuditPro Mobile System`;
         sheet1Data.push([r.plant, r.line, op, in_, sp, sq, overall, st]);
       });
 
-      // 4. Sheet 2: All Filtered Detailed Daily Logs
+      // 4. Graph Datasets (Ready for Excel Chart Generation)
+      sheet1Data.push([]);
+      sheet1Data.push(['४. ग्राफ निर्मितीसाठी डेटासेट (GRAPH PLOTTING DATASETS)']);
+      sheet1Data.push(['Category / Entity (प्लॅन्ट / लाईन)', 'Average Compliance (%)', 'Target (%)']);
+
+      const plantScores = {};
+      records.forEach(r => {
+        const p = r.plant || 'Other';
+        if (!plantScores[p]) plantScores[p] = [];
+        plantScores[p].push(Number(r.score) || 0);
+      });
+      Object.keys(plantScores).forEach(p => {
+        const pAvg = (plantScores[p].reduce((a,b)=>a+b,0)/plantScores[p].length).toFixed(1);
+        sheet1Data.push([p, pAvg + '%', '85%']);
+      });
+
+      // Sheet 2: All Detailed Daily Logs with NC Details
       const sheet2Data = [
         ['Ref ID', 'दिनांक', 'प्लॅन्ट / शॉप', 'मशिन', 'शिफ्ट', 'पद (Role)', 'कर्मचारी / सुपरवायझर नाव', 'ऑडिटरचे नाव', 'मिळालेले गुण', 'कमाल गुण', 'टक्केवारी (%)', 'शेरा / सुधारात्मक कृती (NC)']
       ];
@@ -1802,12 +1917,12 @@ JD AuditPro Mobile System`;
       const ws1 = XLSX.utils.aoa_to_sheet(sheet1Data);
       const ws2 = XLSX.utils.aoa_to_sheet(sheet2Data);
 
-      XLSX.utils.book_append_sheet(wb, ws1, 'Filtered Summary & Matrix');
-      XLSX.utils.book_append_sheet(wb, ws2, 'Filtered Audit Logs');
+      XLSX.utils.book_append_sheet(wb, ws1, 'Summary & Graphs Data');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Detailed Audit Logs');
 
       const fileName = `JD_Audit_Report_${chosenPlant.slice(0,10).replace(/[^a-zA-Z0-9]/g,'')}_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(wb, fileName);
-      showToast('फिल्टर केलेला एक्सेल अहवाल डाऊनलोड झाला!');
+      showToast('तपशीलवार एक्सेल अहवाल डाऊनलोड झाला!');
     }
   </script>
 </body>
